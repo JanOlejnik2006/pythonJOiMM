@@ -1,6 +1,6 @@
-from data import MOVIES;
-from services import add_item, display_items, filter_by_genre;
-from validators import get_int_input, get_non_empty_string;
+from data import MOVIES
+from services import add_item, display_items, filter_by_genre
+from validators import get_int_input, get_non_empty_string
 
 
 def print_menu():
@@ -21,7 +21,7 @@ def add_movie():
         "platform": get_non_empty_string("Platforma VOD: "),
         "rating": get_int_input("Ocena [1-10]: ", 1, 10),
     }
-    added = add_item(MOVIES, new_movie);
+    added = add_item(MOVIES, new_movie)
     print(f"Dodano film o ID {added['id']}.")
 
 
@@ -33,11 +33,11 @@ def filter_movies():
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
-            display_items(MOVIES);
+            display_items(MOVIES)
         case "2":
             add_movie()
         case "3":
-            filter_movies();
+            filter_movies()
         case "4" | "q" | "exit":
             print("Zamykanie programu do widzenia.")
             return False
