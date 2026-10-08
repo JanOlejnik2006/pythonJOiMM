@@ -1,5 +1,5 @@
 from data import MOVIES
-from services import add_item, display_items, filter_by_genre
+from services import add_item, display_items, filter_by_genre, get_genres, save_items
 from validators import get_int_input, get_non_empty_string
 
 
@@ -13,21 +13,35 @@ def print_menu():
     print("4. Wyjscie z programu")
     print("-" * 40)
 
-
-def add_movie():
-    new_movie = {
-        "title": get_non_empty_string("Tytul: "),
+def read_movie_data() -> dict:
+    return {
+        "title": get_non_empty_string("Tytuł: "),
         "genre": get_non_empty_string("Gatunek: "),
         "platform": get_non_empty_string("Platforma VOD: "),
         "rating": get_int_input("Ocena [1-10]: ", 1, 10),
     }
-    added = add_item(MOVIES, new_movie)
+
+def add_movie():
+    added = add_item(MOVIES, read_movie_data())
+    save_items(MOVIES)
     print(f"Dodano film o ID {added['id']}.")
 
 
+def choose_genre() -> str | None:
+    genres = get_genres(MOVIES)
+    if not genres:
+        print("Brak gatunków w kolekcji.")
+        return None
+    for number, genre in enumerate(genres, start=1):
+        print(f"{number}. {genre}")
+    choice = get_int_input(f"Wybierz gatunek [1-{len(genres)}]: ", 1, len(genres))
+    return genres[choice - 1]
+
+
 def filter_movies():
-    genre = get_non_empty_string("Podaj gatunek: ")
-    display_items(filter_by_genre(MOVIES, genre))
+    genre = choose_genre()
+    if genre:
+        display_items(filter_by_genre(MOVIES, genre))
 
 
 def handle_menu_choice(choice: str) -> bool:
