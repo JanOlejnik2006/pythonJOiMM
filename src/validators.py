@@ -10,7 +10,7 @@ def get_int_input(prompt, min_val, max_val):
         if min_val <= value <= max_val:
             return value
 
-        print(f"Liczba musi być z zakresu od {min_val} do {max_val}.")
+        print(f"Wartośc poza zakresem.")
 
 
 def get_non_empty_string(prompt):
