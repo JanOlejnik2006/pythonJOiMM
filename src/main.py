@@ -1,12 +1,27 @@
 #jo
 from data import MOVIES
-from services import add_item, display_items, filter_by_field, get_field_values, save_items
+from services import add_item, display_items, filter_by_field, get_field_values, save_items, sort_by_field
 from validators import get_float_input, get_int_input, get_non_empty_string
 
 #jo
 FILTER_FIELDS = {
     1: ("genre", "gatunek"),
     2: ("platform", "platforma"),
+}
+
+#jo
+SORT_FIELDS = {
+    1: ("id", "ID"),
+    2: ("title", "tytuł"),
+    3: ("genre", "gatunek"),
+    4: ("platform", "platforma"),
+    5: ("rating", "ocena"),
+}
+
+#jo
+SORT_ORDERS = {
+    1: ("rosnąco", False),
+    2: ("malejąco", True),
 }
 
 #mm
@@ -17,7 +32,8 @@ def print_menu():
     print("1. Wyświetl kolekcję")
     print("2. Dodaj film")
     print("3. Filtruj (gatunek / platforma)")
-    print("4. Wyjście z programu")
+    print("4. Sortuj (ID / tytuł / gatunek / platforma / ocena)")
+    print("5. Wyjście z programu")
     print("-" * 40)
 
 #mm
@@ -63,6 +79,28 @@ def filter_movies():
     if value:
         display_items(filter_by_field(MOVIES, field, value))
 
+#jo
+def choose_sort_field() -> tuple[str, str]:
+    print("Sortuj po:")
+    for number, (_, label) in SORT_FIELDS.items():
+        print(f"{number}. {label.capitalize()}")
+    choice = get_int_input(f"Wybierz kryterium [1-{len(SORT_FIELDS)}]: ", 1, len(SORT_FIELDS))
+    return SORT_FIELDS[choice]
+
+#jo
+def choose_sort_order() -> bool:
+    print("Kolejność:")
+    for number, (label, _) in SORT_ORDERS.items():
+        print(f"{number}. {label.capitalize()}")
+    choice = get_int_input(f"Wybierz kolejność [1-{len(SORT_ORDERS)}]: ", 1, len(SORT_ORDERS))
+    return SORT_ORDERS[choice][1]
+
+#jo
+def sort_movies():
+    field, _ = choose_sort_field()
+    descending = choose_sort_order()
+    display_items(sort_by_field(MOVIES, field, descending))
+
 #mm
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
@@ -72,11 +110,13 @@ def handle_menu_choice(choice: str) -> bool:
             add_movie()
         case "3":
             filter_movies()
-        case "4" | "q" | "exit":
+        case "4":
+            sort_movies()
+        case "5" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 4.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 5.")
     return True
 
 #mm
@@ -84,7 +124,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-4]: ")
+        user_choice = input("Wybierz opcję [1-5]: ")
         running = handle_menu_choice(user_choice)
 
 #mm
