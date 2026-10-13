@@ -7,12 +7,18 @@ def format_header() -> str:
     header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Ocena':>5}"
     return header + "\n" + "-" * 58
 
-#mm
+#jo
+HIT_THRESHOLD = 9
+
+#mm (edit:jo)
 def format_row(item: dict) -> str:
-    return (
+    row = (
         f"{item['id']:<4} {item['title']:<20} {item['genre']:<14} "
         f"{item['platform']:<12} {item['rating']:>5.1f}"
     )
+    if item["rating"] >= HIT_THRESHOLD:
+        row += "  HIT"
+    return row
 
 #mm
 def display_items(items_list: list) -> None:
