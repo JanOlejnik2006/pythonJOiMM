@@ -4,4 +4,8 @@ MOVIES = [
     {'id': 3, 'title': 'Parasite', 'genre': 'Thriller', 'platform': 'Disney+', 'rating': 9},
     {'id': 4, 'title': 'Hobbit', 'genre': 'Dzik', 'platform': 'Netflix', 'rating': 6},
     {'id': 5, 'title': 'test', 'genre': 'Dzik', 'platform': 'Disney+', 'rating': 3.5},
+    {'id': 6, 'title': 'Test 2', 'genre': 'Inny', 'platform': 'YouTube', 'rating': 5.6},
+    {'id': 7, 'title': 'debug', 'genre': 'Dzik', 'platform': 'Niedostepny', 'rating': 3.0},
+    {'id': 8, 'title': 'test3', 'genre': 'testowy', 'platform': 'testowa', 'rating': 7.5},
 ]
+# tu juz duzo filmow sie zebralo z testow (warto rozwazyc dodanie pliku do gitignore)

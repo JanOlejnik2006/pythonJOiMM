@@ -1,8 +1,9 @@
+#jo
 from data import MOVIES
 from services import add_item, display_items, filter_by_genre, get_genres, save_items
 from validators import get_float_input, get_int_input, get_non_empty_string
 
-
+#mm
 def print_menu():
     print("\n" + "=" * 40)
     print("   CINESTREAM - KOLEKCJA FILMOWA   ")
@@ -13,11 +14,11 @@ def print_menu():
     print("4. Wyjście z programu")
     print("-" * 40)
 
-
+#mm
 def show_movies():
     display_items(MOVIES)
 
-
+#mm (edit:jo)
 def read_movie_data() -> dict:
     return {
         "title": get_non_empty_string("Tytuł: "),
@@ -26,13 +27,13 @@ def read_movie_data() -> dict:
         "rating": get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10),
     }
 
-
+#mm (edit:jo)
 def add_movie():
     added = add_item(MOVIES, read_movie_data())
     save_items(MOVIES)
     print(f"Dodano film o ID {added['id']}.")
 
-
+#mm (edit:jo)
 def choose_genre() -> str | None:
     genres = get_genres(MOVIES)
     if not genres:
@@ -43,13 +44,13 @@ def choose_genre() -> str | None:
     choice = get_int_input(f"Wybierz gatunek [1-{len(genres)}]: ", 1, len(genres))
     return genres[choice - 1]
 
-
+#mm (edit:jo)
 def filter_movies():
     genre = choose_genre()
     if genre:
         display_items(filter_by_genre(MOVIES, genre))
 
-
+#mm
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
@@ -65,7 +66,7 @@ def handle_menu_choice(choice: str) -> bool:
             print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 4.")
     return True
 
-
+#mm
 def main():
     running = True
     while running:
@@ -73,6 +74,6 @@ def main():
         user_choice = input("Wybierz opcję [1-4]: ")
         running = handle_menu_choice(user_choice)
 
-
+#mm
 if __name__ == "__main__":
     main()
