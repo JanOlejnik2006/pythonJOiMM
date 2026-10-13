@@ -3,7 +3,7 @@ from data import MOVIES
 from services import add_item, display_items, filter_by_field, get_field_values, save_items
 from validators import get_float_input, get_int_input, get_non_empty_string
 
-# Pola, po których można filtrować: (klucz w danych, nazwa do wyświetlenia)
+#jo
 FILTER_FIELDS = {
     1: ("genre", "gatunek"),
     2: ("platform", "platforma"),
@@ -38,14 +38,14 @@ def add_movie():
     added = add_item(MOVIES, read_movie_data())
     save_items(MOVIES)
     print(f"Dodano film o ID {added['id']}.")
-
+#jo
 def choose_filter_field() -> tuple[str, str]:
     print("Filtruj po:")
     for number, (_, label) in FILTER_FIELDS.items():
         print(f"{number}. {label.capitalize()}")
     choice = get_int_input(f"Wybierz kryterium [1-{len(FILTER_FIELDS)}]: ", 1, len(FILTER_FIELDS))
     return FILTER_FIELDS[choice]
-
+#jo
 def choose_value(field: str, label: str) -> str | None:
     values = get_field_values(MOVIES, field)
     if not values:

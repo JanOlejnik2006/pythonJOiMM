@@ -1,6 +1,5 @@
 #jo
 import os
-
 DATA_FILE = os.path.join(os.path.dirname(__file__), "data.py")
 
 #mm
@@ -34,11 +33,11 @@ def add_item(items_list: list, new_item_data: dict) -> dict:
     items_list.append(item)
     return item
 
-# Filtrowanie po dowolnym polu tekstowym (np. "genre" lub "platform")
+#jo
 def filter_by_field(items_list: list, field: str, value: str) -> list:
     return [item for item in items_list if item[field].lower() == value.lower()]
 
-# Unikalne wartości danego pola, posortowane
+#jo
 def get_field_values(items_list: list, field: str) -> list:
     return sorted({item[field] for item in items_list})
 
@@ -49,10 +48,10 @@ def filter_by_genre(items_list: list, genre: str) -> list:
 #jo
 def get_genres(items_list: list) -> list:
     return get_field_values(items_list, "genre")
-
+#jo
 def filter_by_platform(items_list: list, platform: str) -> list:
     return filter_by_field(items_list, "platform", platform)
-
+#jo
 def get_platforms(items_list: list) -> list:
     return get_field_values(items_list, "platform")
 
@@ -63,3 +62,4 @@ def save_items(items_list: list) -> None:
         for item in items_list:
             file.write(f"    {item!r},\n")
         file.write("]\n")
+        
