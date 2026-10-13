@@ -1,15 +1,15 @@
-#jo
+#jo (edit:mm)
 from data import MOVIES
 from services import add_item, display_items, filter_by_field, get_field_values, save_items, sort_by_field
 from validators import get_float_input, get_int_input, get_non_empty_string
 
-#jo
+#jo (edit:mm)
 FILTER_FIELDS = {
     1: ("genre", "gatunek"),
     2: ("platform", "platforma"),
 }
 
-#jo
+#jo (edit:mm)
 SORT_FIELDS = {
     1: ("id", "ID"),
     2: ("title", "tytuł"),
@@ -18,7 +18,7 @@ SORT_FIELDS = {
     5: ("rating", "ocena"),
 }
 
-#jo
+#jo(edit:mm)
 SORT_ORDERS = {
     1: ("rosnąco", False),
     2: ("malejąco", True),
@@ -54,14 +54,14 @@ def add_movie():
     added = add_item(MOVIES, read_movie_data())
     save_items(MOVIES)
     print(f"Dodano film o ID {added['id']}.")
-#jo
+#jo (edit:mm)
 def choose_filter_field() -> tuple[str, str]:
     print("Filtruj po:")
     for number, (_, label) in FILTER_FIELDS.items():
         print(f"{number}. {label.capitalize()}")
     choice = get_int_input(f"Wybierz kryterium [1-{len(FILTER_FIELDS)}]: ", 1, len(FILTER_FIELDS))
     return FILTER_FIELDS[choice]
-#jo
+#jo (edit:mm)
 def choose_value(field: str, label: str) -> str | None:
     values = get_field_values(MOVIES, field)
     if not values:
@@ -79,7 +79,7 @@ def filter_movies():
     if value:
         display_items(filter_by_field(MOVIES, field, value))
 
-#jo
+#jo (edit:mm)
 def choose_sort_field() -> tuple[str, str]:
     print("Sortuj po:")
     for number, (_, label) in SORT_FIELDS.items():
@@ -87,7 +87,7 @@ def choose_sort_field() -> tuple[str, str]:
     choice = get_int_input(f"Wybierz kryterium [1-{len(SORT_FIELDS)}]: ", 1, len(SORT_FIELDS))
     return SORT_FIELDS[choice]
 
-#jo
+#jo (edit:mm)
 def choose_sort_order() -> bool:
     print("Kolejność:")
     for number, (label, _) in SORT_ORDERS.items():
@@ -95,7 +95,7 @@ def choose_sort_order() -> bool:
     choice = get_int_input(f"Wybierz kolejność [1-{len(SORT_ORDERS)}]: ", 1, len(SORT_ORDERS))
     return SORT_ORDERS[choice][1]
 
-#jo
+#jo (edit:mm)
 def sort_movies():
     field, _ = choose_sort_field()
     descending = choose_sort_order()
