@@ -8,8 +8,8 @@
 
 ---
 
-## 1. Cel zadania
-Zrobiliśmy program w konsoli do zarządzania kolekcją filmów. Można w nim wyświetlić filmy, dodać nowy film i filtrować po gatunku. Program ma po wpisaniu błędnych danych zapytać jeszcze raz. Użyliśmy pętli `while`, `match-case`, `try-except`, listy słowników i f-stringów.
+## 1. Cel i Zakres Inżynierski Zadania
+Zrobiliśmy program w konsoli do zarządzania kolekcją filmów. Można w nim wyświetlić filmy, dodać nowy film i filtrować po gatunku i sortować. Program ma po wpisaniu błędnych danych ma zapytać jeszcze raz. Użyliśmy pętli `while`, `match-case`, `try-except`, listy słowników i f-stringów.
 
 ---
 
@@ -70,9 +70,10 @@ Ta funkcja pyta użytkownika o liczbę tak długo, aż poda poprawną. Gdy wpisz
 1. Wyświetl kolekcję
 2. Dodaj film
 3. Filtruj po gatunku
-4. Wyjście z programu
+4. Sortuj (ID / tytuł / gatunek / platforma / ocena)
+5. Wyjście z programu
 ----------------------------------------
-Wybierz opcję [1-4]: 2
+Wybierz opcję [1-5]: 2
 Tytuł: Test 2
 Gatunek: Inny
 Platforma VOD: YouTube
@@ -91,10 +92,11 @@ Po zamknięciu i ponownym uruchomieniu programu film nadal jest na liście, bo z
 1. Wyświetl kolekcję
 2. Dodaj film
 3. Filtruj po gatunku
-4. Wyjście z programu
+4. Sortuj (ID / tytuł / gatunek / platforma / ocena)
+5. Wyjście z programu
 ----------------------------------------
-Wybierz opcję [1-4]: abc
-Błąd: Nieznana opcja. Wybierz wartość od 1 do 4.
+Wybierz opcję [1-5]: abc
+Błąd: Nieznana opcja. Wybierz wartość od 1 do 5.
 
 ========================================
    CINESTREAM - KOLEKCJA FILMOWA   
@@ -102,9 +104,10 @@ Błąd: Nieznana opcja. Wybierz wartość od 1 do 4.
 1. Wyświetl kolekcję
 2. Dodaj film
 3. Filtruj po gatunku
-4. Wyjście z programu
+4. Sortuj (ID / tytuł / gatunek / platforma / ocena)
+5. Wyjście z programu
 ----------------------------------------
-Wybierz opcję [1-4]: 2
+Wybierz opcję [1-5]: 2
 Tytuł: 
 Tekst nie może być pusty.
 Tytuł: test3
@@ -129,16 +132,15 @@ Program za każdym razem pokazał błąd i zapytał jeszcze raz, albo wrócił d
 ## 5. Podział pracy
 * **Mateusz Mazur:**
   * Moduły: `src/main.py`, `README.md`, `SPRAWOZDANIE.md`
-  * Co zrobił: menu, wybór opcji w menu, komunikaty dla użytkownika
-  * Liczba commitów: 6
+  * Co zrobił: menu, wybór opcji w menu, komunikaty dla użytkownika, sortowanie, drobne poprawki
+  * Liczba commitów: 12
 * **Jan Olejnik:**
   * Moduły: `src/validators.py`, `src/data.py`, `src/services.py`
-  * Co zrobił: walidatory, dane startowe, funkcje na filmach, filtrowanie, zapis do pliku, oceny z kropką
-  * Liczba commitów: 9
+  * Co zrobił: walidatory, dane startowe, funkcje na filmach, filtrowanie, zapis do pliku, oceny z kropką, sortowanie, filtrowanie
+  * Liczba commitów: 13
 
 ---
 
 ## Źródła wiedzy
 * W3Schools – Python Tutorial: https://www.w3schools.com/python/ (m.in. pętle `while`, `try-except`, listy i słowniki, f-stringi, `match-case`)
 * Materiały z wykładu (slajdy do Laboratorium 01.1)
-s
