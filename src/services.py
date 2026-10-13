@@ -38,6 +38,14 @@ def filter_by_field(items_list: list, field: str, value: str) -> list:
     return [item for item in items_list if item[field].lower() == value.lower()]
 
 #jo
+def sort_by_field(items_list: list, field: str, descending: bool = False) -> list:
+    return sorted(
+        items_list,
+        key=lambda item: item[field].lower() if isinstance(item[field], str) else item[field],
+        reverse=descending,
+    )
+
+#jo
 def get_field_values(items_list: list, field: str) -> list:
     return sorted({item[field] for item in items_list})
 
