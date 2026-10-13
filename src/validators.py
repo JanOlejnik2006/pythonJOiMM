@@ -1,6 +1,7 @@
+#jo
 import math
 
-
+#jo
 def get_int_input(prompt, min_val, max_val):
     while True:
         raw = input(prompt).strip()
@@ -15,7 +16,7 @@ def get_int_input(prompt, min_val, max_val):
 
         print(f"Wartośc poza zakresem.")
 
-
+#jo
 def get_non_empty_string(prompt):
     while True:
         value = input(prompt).strip()
@@ -24,7 +25,7 @@ def get_non_empty_string(prompt):
         print("Tekst nie może być pusty.")
 
 
-
+#jo
 def get_float_input(prompt: str, min_val: float = None, max_val: float = None) -> float:
     while True:
         raw = input(prompt).strip()
