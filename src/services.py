@@ -34,13 +34,27 @@ def add_item(items_list: list, new_item_data: dict) -> dict:
     items_list.append(item)
     return item
 
+# Filtrowanie po dowolnym polu tekstowym (np. "genre" lub "platform")
+def filter_by_field(items_list: list, field: str, value: str) -> list:
+    return [item for item in items_list if item[field].lower() == value.lower()]
+
+# Unikalne wartości danego pola, posortowane
+def get_field_values(items_list: list, field: str) -> list:
+    return sorted({item[field] for item in items_list})
+
 #jo
 def filter_by_genre(items_list: list, genre: str) -> list:
-    return [item for item in items_list if item["genre"].lower() == genre.lower()]
+    return filter_by_field(items_list, "genre", genre)
 
 #jo
 def get_genres(items_list: list) -> list:
-    return sorted({item["genre"] for item in items_list})
+    return get_field_values(items_list, "genre")
+
+def filter_by_platform(items_list: list, platform: str) -> list:
+    return filter_by_field(items_list, "platform", platform)
+
+def get_platforms(items_list: list) -> list:
+    return get_field_values(items_list, "platform")
 
 #jo
 def save_items(items_list: list) -> None:

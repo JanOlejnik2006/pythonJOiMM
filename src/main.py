@@ -1,7 +1,13 @@
 #jo
 from data import MOVIES
-from services import add_item, display_items, filter_by_genre, get_genres, save_items
+from services import add_item, display_items, filter_by_field, get_field_values, save_items
 from validators import get_float_input, get_int_input, get_non_empty_string
+
+# Pola, po których można filtrować: (klucz w danych, nazwa do wyświetlenia)
+FILTER_FIELDS = {
+    1: ("genre", "gatunek"),
+    2: ("platform", "platforma"),
+}
 
 #mm
 def print_menu():
@@ -10,7 +16,7 @@ def print_menu():
     print("=" * 40)
     print("1. Wyświetl kolekcję")
     print("2. Dodaj film")
-    print("3. Filtruj po gatunku")
+    print("3. Filtruj (gatunek / platforma)")
     print("4. Wyjście z programu")
     print("-" * 40)
 
@@ -33,22 +39,29 @@ def add_movie():
     save_items(MOVIES)
     print(f"Dodano film o ID {added['id']}.")
 
-#mm (edit:jo)
-def choose_genre() -> str | None:
-    genres = get_genres(MOVIES)
-    if not genres:
-        print("Brak gatunków w kolekcji.")
+def choose_filter_field() -> tuple[str, str]:
+    print("Filtruj po:")
+    for number, (_, label) in FILTER_FIELDS.items():
+        print(f"{number}. {label.capitalize()}")
+    choice = get_int_input(f"Wybierz kryterium [1-{len(FILTER_FIELDS)}]: ", 1, len(FILTER_FIELDS))
+    return FILTER_FIELDS[choice]
+
+def choose_value(field: str, label: str) -> str | None:
+    values = get_field_values(MOVIES, field)
+    if not values:
+        print(f"Brak wartości ({label}) w kolekcji.")
         return None
-    for number, genre in enumerate(genres, start=1):
-        print(f"{number}. {genre}")
-    choice = get_int_input(f"Wybierz gatunek [1-{len(genres)}]: ", 1, len(genres))
-    return genres[choice - 1]
+    for number, value in enumerate(values, start=1):
+        print(f"{number}. {value}")
+    choice = get_int_input(f"Wybierz {label} [1-{len(values)}]: ", 1, len(values))
+    return values[choice - 1]
 
 #mm (edit:jo)
 def filter_movies():
-    genre = choose_genre()
-    if genre:
-        display_items(filter_by_genre(MOVIES, genre))
+    field, label = choose_filter_field()
+    value = choose_value(field, label)
+    if value:
+        display_items(filter_by_field(MOVIES, field, value))
 
 #mm
 def handle_menu_choice(choice: str) -> bool:
