@@ -1,7 +1,7 @@
 #jo
 import math
 
-#jo
+#jo (edit:mm)
 def get_int_input(prompt, min_val, max_val):
     while True:
         raw = input(prompt).strip()
@@ -14,7 +14,7 @@ def get_int_input(prompt, min_val, max_val):
         if min_val <= value <= max_val:
             return value
 
-        print(f"Wartośc poza zakresem.")
+        print("Wartośc poza zakresem.")
 
 #jo
 def get_non_empty_string(prompt):
