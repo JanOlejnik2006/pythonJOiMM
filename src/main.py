@@ -54,12 +54,12 @@ def print_menu():
     print("   CINESTREAM - KOLEKCJA FILMOWA   ")
     print("=" * 40)
     print_view()
-    print("1. Wyświetl kolekcję")
-    print("2. Dodaj film")
-    print("3. Filtruj (gatunek / platforma)")
-    print("4. Sortuj (ID / tytuł / gatunek / platforma / ocena / czas)")
-    print("5. Szukaj po tytule")
-    print("6. Watchlista (do obejrzenia)")
+    print("1. Szukaj po tytule")
+    print("2. Watchlista")
+    print("3. Wyświetl kolekcję")
+    print("4. Sortuj")
+    print("5. Filtruj")
+    print("6. Dodaj film")
     print("7. Wyjście z programu")
     print("-" * 40)
 
@@ -151,8 +151,8 @@ def print_watchlist_menu():
     print("1. Wyświetl watchlistę")
     print("2. Dodaj film do watchlisty")
     print("3. Usuń film z watchlisty")
-    print("4. Filtruj (gatunek / platforma)")
-    print("5. Sortuj (ID / tytuł / gatunek / platforma / ocena / czas)")
+    print("4. Filtruj")
+    print("5. Sortuj")
     print("6. Powrót do menu")
 
 #mm
@@ -219,17 +219,17 @@ def watchlist_menu():
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
-            show_movies()
+            search_movies()
         case "2":
-            add_movie()
+            watchlist_menu()
         case "3":
-            filter_movies(load_movies())
+            show_movies()
         case "4":
             sort_movies(load_movies())
         case "5":
-            search_movies()
+            filter_movies(load_movies())
         case "6":
-            watchlist_menu()
+            add_movie()
         case "7" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
