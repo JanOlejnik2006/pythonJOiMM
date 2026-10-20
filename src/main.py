@@ -3,7 +3,7 @@ from data import WATCHLIST
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    remove_from_watchlist, save_watchlist, total_duration,
+    remove_from_watchlist, save_watchlist, search_by_title, total_duration,
 )
 from validators import get_float_input, get_int_input, get_non_empty_string
 
@@ -58,8 +58,9 @@ def print_menu():
     print("2. Dodaj film")
     print("3. Filtruj (gatunek / platforma)")
     print("4. Sortuj (ID / tytuł / gatunek / platforma / ocena / czas)")
-    print("5. Watchlista (do obejrzenia)")
-    print("6. Wyjście z programu")
+    print("5. Szukaj po tytule")
+    print("6. Watchlista (do obejrzenia)")
+    print("7. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -82,6 +83,15 @@ def add_movie():
     added = add_item(load_movies(), movie_data)
     save_movie(added)
     print(f"Dodano film o ID {added['id']}.")
+#mm
+def search_movies():
+    query = get_non_empty_string("Szukana fraza w tytule: ")
+    results = search_by_title(load_movies(), query)
+    if not results:
+        print(f"Brak filmów z frazą '{query}' w tytule.")
+        return
+    display_items(apply_view(results, VIEW))
+
 #jo (edit:mm)
 def choose_filter_field() -> tuple[str, str]:
     print("Filtruj po:")
@@ -217,12 +227,14 @@ def handle_menu_choice(choice: str) -> bool:
         case "4":
             sort_movies(load_movies())
         case "5":
+            search_movies()
+        case "6":
             watchlist_menu()
-        case "6" | "q" | "exit":
+        case "7" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 6.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
     return True
 
 #mm
@@ -230,7 +242,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-6]: ")
+        user_choice = input("Wybierz opcję [1-7]: ")
         running = handle_menu_choice(user_choice)
 
 #mm

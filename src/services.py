@@ -55,6 +55,10 @@ def add_item(items_list: list, new_item_data: dict) -> dict:
 def filter_by_field(items_list: list, field: str, value: str) -> list:
     return [item for item in items_list if item[field].lower() == value.lower()]
 
+#mm
+def search_by_title(items_list: list, query: str) -> list:
+    return [item for item in items_list if query.casefold() in item["title"].casefold()]
+
 #jo
 def sort_by_field(items_list: list, field: str, descending: bool = False) -> list:
     return sorted(
