@@ -1,11 +1,14 @@
 #jo (edit:mm)
-from data import WATCHLIST
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    remove_from_watchlist, save_watchlist, search_by_title, total_duration,
+    remove_from_watchlist, search_by_title, total_duration,
 )
+from storage import load_watchlist, save_watchlist
 from validators import get_float_input, get_int_input, get_non_empty_string
+
+#mm
+WATCHLIST = load_watchlist()
 
 #jo
 VIEW = {
