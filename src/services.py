@@ -4,8 +4,8 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "data.py")
 
 #mm
 def format_header() -> str:
-    header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Ocena':>5}"
-    return header + "\n" + "-" * 58
+    header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Czas':>7} {'Ocena':>5}"
+    return header + "\n" + "-" * 66
 
 #jo
 HIT_THRESHOLD = 9
@@ -14,7 +14,7 @@ HIT_THRESHOLD = 9
 def format_row(item: dict) -> str:
     row = (
         f"{item['id']:<4} {item['title']:<20} {item['genre']:<14} "
-        f"{item['platform']:<12} {item['rating']:>5.1f}"
+        f"{item['platform']:<12} {item['duration']:>3} min {item['rating']:>5.1f}"
     )
     if item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
@@ -52,6 +52,14 @@ def sort_by_field(items_list: list, field: str, descending: bool = False) -> lis
     )
 
 #jo
+def apply_view(items_list: list, view: dict) -> list:
+    if view["filter"] is not None:
+        field, value = view["filter"]
+        items_list = filter_by_field(items_list, field, value)
+    field, descending = view["sort"]
+    return sort_by_field(items_list, field, descending)
+
+#jo
 def get_field_values(items_list: list, field: str) -> list:
     return sorted({item[field] for item in items_list})
 
@@ -70,9 +78,36 @@ def get_platforms(items_list: list) -> list:
     return get_field_values(items_list, "platform")
 
 #jo
-def save_items(items_list: list) -> None:
+def find_by_id(items_list: list, item_id: int) -> dict | None:
+    for item in items_list:
+        if item["id"] == item_id:
+            return item
+    return None
+
+#jo
+def add_to_watchlist(watchlist: list, items_list: list, item_id: int) -> bool:
+    item = find_by_id(items_list, item_id)
+    if item is None or find_by_id(watchlist, item_id) is not None:
+        return False
+    watchlist.append(dict(item))
+    return True
+
+#jo
+def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
+    item = find_by_id(watchlist, item_id)
+    if item is None:
+        return False
+    watchlist.remove(item)
+    return True
+
+#jo
+def total_duration(items_list: list) -> int:
+    return sum(item["duration"] for item in items_list)
+
+#jo (edit:mm)
+def save_watchlist(items_list: list) -> None:
     with open(DATA_FILE, "w", encoding="utf-8") as file:
-        file.write("MOVIES = [\n")
+        file.write("WATCHLIST = [\n")
         for item in items_list:
             file.write(f"    {item!r},\n")
         file.write("]\n")
