@@ -17,6 +17,7 @@ Zrobiliśmy program w konsoli do zarządzania kolekcją filmów. Można w nim wy
 * `src/data.py` – lista filmów (`MOVIES`). Każdy film to słownik z id, tytułem, gatunkiem, platformą i oceną. Nowe filmy zapisują się tu automatycznie.
 * `src/validators.py` – funkcje, które pobierają dane od użytkownika i sprawdzają, czy są poprawne (liczba całkowita, liczba z kropką, niepusty tekst).
 * `src/services.py` – funkcje do pracy na filmach: wyświetlanie tabeli, dodawanie filmu, filtrowanie po gatunku, zapis do `data.py`.
+* `src/db.py` – połączenie z bazą MongoDB Atlas. Adres bazy jest w pliku `.env`, którego nie wrzucamy do gita.
 * `src/main.py` – menu w konsoli i pętla główna, która wywołuje resztę funkcji.
 
 ---
@@ -135,8 +136,8 @@ Program za każdym razem pokazał błąd i zapytał jeszcze raz, albo wrócił d
   * Co zrobił: menu, wybór opcji w menu, komunikaty dla użytkownika, sortowanie, drobne poprawki
   * Liczba commitów: 12
 * **Jan Olejnik:**
-  * Moduły: `src/validators.py`, `src/data.py`, `src/services.py`
-  * Co zrobił: walidatory, dane startowe, funkcje na filmach, filtrowanie, zapis do pliku, oceny z kropką, sortowanie, filtrowanie
+  * Moduły: `src/validators.py`, `src/data.py`, `src/services.py`, `src/db.py`
+  * Co zrobił: walidatory, dane startowe, funkcje na filmach, filtrowanie po gatunku i platformie, zapis do pliku, oceny z kropką, logika sortowania, połączenie z MongoDB
   * Liczba commitów: 13
 
 ---
