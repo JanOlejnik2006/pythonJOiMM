@@ -237,9 +237,9 @@ Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.
 Przy pustym pliku program po prostu pokazał pustą watchlistę. W żadnym przypadku nie było `Traceback` ani `FileNotFoundError` w konsoli.
 
 ## 5. Podział pracy (Zadanie 2)
-* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, sprawozdanie do Zadania 2 – 3 commity.
+* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, sprawozdanie do Zadania 2 – 4 commity.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu – 3 commity.
-* **Łącznie w repozytorium:** Jan Olejnik 24 commity, Mateusz Mazur 20 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 24 commity, Mateusz Mazur 21 commitów.
 
 
 **Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
