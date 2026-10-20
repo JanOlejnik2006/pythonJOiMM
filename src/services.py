@@ -69,6 +69,33 @@ def filter_by_platform(items_list: list, platform: str) -> list:
 def get_platforms(items_list: list) -> list:
     return get_field_values(items_list, "platform")
 
+#jo
+def find_by_id(items_list: list, item_id: int) -> dict | None:
+    for item in items_list:
+        if item["id"] == item_id:
+            return item
+    return None
+
+#jo
+def add_to_watchlist(watchlist: list, items_list: list, item_id: int) -> bool:
+    item = find_by_id(items_list, item_id)
+    if item is None or find_by_id(watchlist, item_id) is not None:
+        return False
+    watchlist.append(dict(item))
+    return True
+
+#jo
+def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
+    item = find_by_id(watchlist, item_id)
+    if item is None:
+        return False
+    watchlist.remove(item)
+    return True
+
+#jo
+def total_duration(items_list: list) -> int:
+    return sum(item["duration"] for item in items_list)
+
 #jo (edit:mm)
 def save_watchlist(items_list: list) -> None:
     with open(DATA_FILE, "w", encoding="utf-8") as file:
