@@ -1,7 +1,3 @@
-#jo
-import os
-DATA_FILE = os.path.join(os.path.dirname(__file__), "data.py")
-
 #mm
 def column_widths(items_list: list) -> dict:
     widths = {"title": len("Tytuł"), "genre": len("Gatunek"), "platform": len("Platforma")}
@@ -119,12 +115,3 @@ def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
 #jo
 def total_duration(items_list: list) -> int:
     return sum(item["duration"] for item in items_list)
-
-#jo (edit:mm)
-def save_watchlist(items_list: list) -> None:
-    with open(DATA_FILE, "w", encoding="utf-8") as file:
-        file.write("WATCHLIST = [\n")
-        for item in items_list:
-            file.write(f"    {item!r},\n")
-        file.write("]\n")
-        
