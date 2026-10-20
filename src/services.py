@@ -3,18 +3,29 @@ import os
 DATA_FILE = os.path.join(os.path.dirname(__file__), "data.py")
 
 #mm
-def format_header() -> str:
-    header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Czas':>7} {'Ocena':>5}"
-    return header + "\n" + "-" * 66
+def column_widths(items_list: list) -> dict:
+    widths = {"title": len("Tytuł"), "genre": len("Gatunek"), "platform": len("Platforma")}
+    for item in items_list:
+        for field in widths:
+            widths[field] = max(widths[field], len(item[field]))
+    return widths
+
+#mm
+def format_header(widths: dict) -> str:
+    header = (
+        f"{'ID':<4} {'Tytuł':<{widths['title']}} {'Gatunek':<{widths['genre']}} "
+        f"{'Platforma':<{widths['platform']}} {'Czas':>7} {'Ocena':>5}"
+    )
+    return header + "\n" + "-" * len(header)
 
 #jo
 HIT_THRESHOLD = 9
 
 #mm (edit:jo)
-def format_row(item: dict) -> str:
+def format_row(item: dict, widths: dict) -> str:
     row = (
-        f"{item['id']:<4} {item['title']:<20} {item['genre']:<14} "
-        f"{item['platform']:<12} {item['duration']:>3} min {item['rating']:>5.1f}"
+        f"{item['id']:<4} {item['title']:<{widths['title']}} {item['genre']:<{widths['genre']}} "
+        f"{item['platform']:<{widths['platform']}} {item['duration']:>3} min {item['rating']:>5.1f}"
     )
     if item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
@@ -25,9 +36,10 @@ def display_items(items_list: list) -> None:
     if not items_list:
         print("Brak pozycji do wyświetlenia.")
         return
-    print(format_header())
+    widths = column_widths(items_list)
+    print(format_header(widths))
     for item in items_list:
-        print(format_row(item))
+        print(format_row(item, widths))
 
 #jo
 def next_id(items_list: list) -> int:
