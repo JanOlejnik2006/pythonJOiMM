@@ -139,19 +139,24 @@ def sort_movies(items_list: list):
 #mm
 def print_watchlist_menu():
     print("\n--- WATCHLISTA ---")
+    print_view()
     print("1. Wyświetl watchlistę")
     print("2. Dodaj film do watchlisty")
     print("3. Usuń film z watchlisty")
-    print("4. Powrót do menu")
+    print("4. Filtruj (gatunek / platforma)")
+    print("5. Sortuj (ID / tytuł / gatunek / platforma / ocena / czas)")
+    print("6. Powrót do menu")
 
 #mm
 def show_watchlist():
-    display_items(WATCHLIST)
-    minutes = total_duration(WATCHLIST)
+    visible = apply_view(WATCHLIST, VIEW)
+    display_items(visible)
+    minutes = total_duration(visible)
     print(f"Łączny czas seansu: {minutes // 60} h {minutes % 60} min")
 
 #mm
 def choose_movie(items_list: list) -> dict | None:
+    items_list = apply_view(items_list, VIEW)
     if not items_list:
         print("Brak filmów do wyboru.")
         return None
@@ -185,7 +190,7 @@ def watchlist_menu():
     running = True
     while running:
         print_watchlist_menu()
-        match input("Wybierz opcję [1-4]: ").strip():
+        match input("Wybierz opcję [1-6]: ").strip():
             case "1":
                 show_watchlist()
             case "2":
@@ -193,9 +198,13 @@ def watchlist_menu():
             case "3":
                 watchlist_remove()
             case "4":
+                filter_movies(WATCHLIST)
+            case "5":
+                sort_movies(WATCHLIST)
+            case "6":
                 running = False
             case _:
-                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 4.")
+                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 6.")
 
 #mm
 def handle_menu_choice(choice: str) -> bool:
