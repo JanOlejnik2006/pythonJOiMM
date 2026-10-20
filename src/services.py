@@ -4,8 +4,8 @@ DATA_FILE = os.path.join(os.path.dirname(__file__), "data.py")
 
 #mm
 def format_header() -> str:
-    header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Ocena':>5}"
-    return header + "\n" + "-" * 58
+    header = f"{'ID':<4} {'Tytuł':<20} {'Gatunek':<14} {'Platforma':<12} {'Czas':>7} {'Ocena':>5}"
+    return header + "\n" + "-" * 66
 
 #jo
 HIT_THRESHOLD = 9
@@ -14,7 +14,7 @@ HIT_THRESHOLD = 9
 def format_row(item: dict) -> str:
     row = (
         f"{item['id']:<4} {item['title']:<20} {item['genre']:<14} "
-        f"{item['platform']:<12} {item['rating']:>5.1f}"
+        f"{item['platform']:<12} {item['duration']:>3} min {item['rating']:>5.1f}"
     )
     if item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"

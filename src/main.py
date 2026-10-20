@@ -16,6 +16,7 @@ SORT_FIELDS = {
     3: ("genre", "gatunek"),
     4: ("platform", "platforma"),
     5: ("rating", "ocena"),
+    6: ("duration", "czas trwania"),
 }
 
 #jo(edit:mm)
@@ -32,7 +33,7 @@ def print_menu():
     print("1. Wyświetl kolekcję")
     print("2. Dodaj film")
     print("3. Filtruj (gatunek / platforma)")
-    print("4. Sortuj (ID / tytuł / gatunek / platforma / ocena)")
+    print("4. Sortuj (ID / tytuł / gatunek / platforma / ocena / czas)")
     print("5. Wyjście z programu")
     print("-" * 40)
 
@@ -47,6 +48,7 @@ def read_movie_data() -> dict:
         "genre": get_non_empty_string("Gatunek: "),
         "platform": get_non_empty_string("Platforma VOD: "),
         "rating": get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10),
+        "duration": get_int_input("Czas trwania [min]: ", 1, 600),
     }
 
 #mm (edit:jo)
