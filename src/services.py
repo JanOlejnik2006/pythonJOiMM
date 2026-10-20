@@ -69,10 +69,10 @@ def filter_by_platform(items_list: list, platform: str) -> list:
 def get_platforms(items_list: list) -> list:
     return get_field_values(items_list, "platform")
 
-#jo
-def save_items(items_list: list) -> None:
+#jo (edit:mm)
+def save_watchlist(items_list: list) -> None:
     with open(DATA_FILE, "w", encoding="utf-8") as file:
-        file.write("MOVIES = [\n")
+        file.write("WATCHLIST = [\n")
         for item in items_list:
             file.write(f"    {item!r},\n")
         file.write("]\n")
