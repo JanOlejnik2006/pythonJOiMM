@@ -163,3 +163,83 @@ Program za każdym razem pokazał błąd i zapytał jeszcze raz, albo wrócił d
 * Materiały z wykładu (slajdy do Laboratorium 01.1)
 * Dokumentacja PyMongo – Tutorial: https://pymongo.readthedocs.io/en/stable/tutorial.html (łączenie z bazą, `find`, `insert_one`, `insert_many`)
 * Materiały z wykładu (slajdy do Laboratorium 01.2 – filtrowanie z `casefold()`, wyszukiwanie po ID, wzorzec aktywnego rachunku BrewMaster)
+
+---
+---
+
+# Zadanie 2 – Persystencja danych (pliki CSV)
+
+## 1. Cel
+Watchlista nie jest już zapisywana w pliku `data.py`, tylko w pliku `data/watchlist.csv`. Cały kod do obsługi plików przenieśliśmy do nowego modułu `storage.py`, więc `main.py` nie otwiera żadnych plików sam. Główna kolekcja filmów zostaje w bazie MongoDB Atlas (zamiast pliku JSON z instrukcji). Program nie wywala się, gdy pliku nie ma, gdy jest uszkodzony albo gdy nie ma połączenia z bazą.
+
+## 2. Zmiany w strukturze plików
+* `src/storage.py` – nowy moduł: `load_watchlist()` czyta `data/watchlist.csv` przez `csv.DictReader`, a `save_watchlist()` zapisuje przez `csv.DictWriter`. Ścieżka jest zrobiona przez `pathlib`, a folder `data/` tworzy się sam.
+* `data/watchlist.csv` – plik z watchlistą (id, tytuł, gatunek, platforma, ocena, czas). Jest w `.gitignore`, bo zmienia się przy każdym użyciu programu.
+* `src/data.py` – trzyma teraz tylko `VIEW`, czyli aktualny filtr i sortowanie.
+* `src/db.py` – połączenie z MongoDB czeka maksymalnie 5 sekund, a `main.py` pokazuje komunikat, gdy bazy nie ma.
+* `src/services.py` – doszła funkcja `average_rating()` (średnia ocena w watchliście), a stary zapis do `data.py` usunęliśmy.
+
+## 3. Kluczowy fragment kodu
+```python
+def load_watchlist() -> list:
+    try:
+        with open(WATCHLIST_FILE, mode="r", newline="", encoding="utf-8") as file:
+            rows = list(csv.DictReader(file))
+    except FileNotFoundError:
+        save_watchlist([])
+        return []
+    watchlist = []
+    try:
+        for row in rows:
+            watchlist.append({
+                "id": int(row["id"]),
+                "title": row["title"],
+                "genre": row["genre"],
+                "platform": row["platform"],
+                "rating": float(row["rating"]),
+                "duration": int(row["duration"]),
+            })
+    except (KeyError, ValueError, TypeError):
+        print(f"Błąd: Plik {WATCHLIST_FILE.name} jest uszkodzony, watchlista zaczyna się od nowa.")
+        return []
+    return watchlist
+```
+
+**Uzasadnienie wyboru:**  
+Gdy pliku nie ma (pierwsze uruchomienie), łapiemy `FileNotFoundError`, tworzymy pusty plik z nagłówkiem i zaczynamy z pustą watchlistą. `DictReader` zwraca same napisy, więc id, ocenę i czas zamieniamy z powrotem na liczby, a gdy plik jest uszkodzony (zły format, brak kolumn), łapiemy `ValueError`/`KeyError` i program działa dalej.
+
+## 4. Testy
+
+### Scenariusz A: pierwsze uruchomienie i zapis
+* **Co zrobiliśmy:** usunęliśmy folder `data/`, uruchomiliśmy program, w watchliście dodaliśmy Incepcję i film z polskimi znakami. Potem zamknęliśmy i włączyliśmy program jeszcze raz.
+* **Wynik:** program sam utworzył `data/watchlist.csv`, a po każdym dodaniu plik od razu się zmieniał:
+```text
+id,title,genre,platform,rating,duration
+1,Incepcja,Sci-Fi,Netflix,9,148
+3,Łódź Kaliska ąę,Komedia,CDA,7.5,95
+```
+Po ponownym uruchomieniu watchlista się wczytała:
+```text
+1    Incepcja        Sci-Fi  Netflix   148 min   9.0  HIT
+3    Łódź Kaliska ąę Komedia CDA        95 min   7.5
+Łączny czas seansu: 4 h 3 min
+Średnia ocena: 8.2
+```
+
+### Scenariusz B: uszkodzony plik i brak bazy
+* **Co zrobiliśmy:** w `watchlist.csv` wpisaliśmy `abc` zamiast oceny, potem same śmieci bez nagłówka, a na koniec pusty plik. Osobno uruchomiliśmy program ze złym adresem bazy.
+* **Wynik:**
+```text
+Błąd: Plik watchlist.csv jest uszkodzony, watchlista zaczyna się od nowa.
+...
+Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.
+```
+Przy pustym pliku program po prostu pokazał pustą watchlistę. W żadnym przypadku nie było `Traceback` ani `FileNotFoundError` w konsoli.
+
+## 5. Podział pracy (Zadanie 2)
+* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, sprawozdanie do Zadania 2 – 3 commity.
+* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą – 2 commity.
+* **Łącznie w repozytorium:** Jan Olejnik 23 commity, Mateusz Mazur 20 commitów.
+
+
+**Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html

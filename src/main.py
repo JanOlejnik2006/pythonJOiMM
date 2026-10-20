@@ -4,7 +4,7 @@ from data import VIEW
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    remove_from_watchlist, search_by_title, total_duration,
+    average_rating, remove_from_watchlist, search_by_title, total_duration,
 )
 from storage import load_watchlist, save_watchlist
 from validators import get_float_input, get_int_input, get_non_empty_string
@@ -160,6 +160,7 @@ def show_watchlist():
     display_items(visible)
     minutes = total_duration(visible)
     print(f"Łączny czas seansu: {minutes // 60} h {minutes % 60} min")
+    print(f"Średnia ocena: {average_rating(visible):.1f}")
 
 #mm
 def choose_movie(items_list: list) -> dict | None:
