@@ -28,10 +28,7 @@ def get_non_empty_string(prompt):
 #jo
 def get_float_input(prompt: str, min_val: float = None, max_val: float = None) -> float:
     while True:
-        raw = input(prompt).strip()
-        if "," in raw:
-            print("Błąd: Użyj kropki zamiast przecinka, np. 7.5")
-            continue
+        raw = input(prompt).strip().replace(",", ".")
         if not raw:
             print("Błąd: Pusta wartość.")
             continue
