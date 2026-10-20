@@ -52,6 +52,14 @@ def sort_by_field(items_list: list, field: str, descending: bool = False) -> lis
     )
 
 #jo
+def apply_view(items_list: list, view: dict) -> list:
+    if view["filter"] is not None:
+        field, value = view["filter"]
+        items_list = filter_by_field(items_list, field, value)
+    field, descending = view["sort"]
+    return sort_by_field(items_list, field, descending)
+
+#jo
 def get_field_values(items_list: list, field: str) -> list:
     return sorted({item[field] for item in items_list})
 

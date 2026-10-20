@@ -2,18 +2,25 @@
 from data import WATCHLIST
 from db import load_movies, save_movie
 from services import (
-    add_item, add_to_watchlist, display_items, filter_by_field, get_field_values,
-    remove_from_watchlist, save_watchlist, sort_by_field, total_duration,
+    add_item, add_to_watchlist, apply_view, display_items, get_field_values,
+    remove_from_watchlist, save_watchlist, total_duration,
 )
 from validators import get_float_input, get_int_input, get_non_empty_string
 
 #jo
 MOVIES = load_movies()
 
+#jo
+VIEW = {
+    "filter": None,
+    "sort": ("id", False),
+}
+
 #jo (edit:mm)
 FILTER_FIELDS = {
     1: ("genre", "gatunek"),
     2: ("platform", "platforma"),
+    3: (None, "bez filtra (pokaż wszystko)"),
 }
 
 #jo (edit:mm)
@@ -32,11 +39,24 @@ SORT_ORDERS = {
     2: ("malejąco", True),
 }
 
-#mm
+#jo
+def print_view():
+    labels = dict(SORT_FIELDS.values())
+    sort_field, descending = VIEW["sort"]
+    order = "malejąco" if descending else "rosnąco"
+    if VIEW["filter"] is None:
+        filter_text = "brak"
+    else:
+        field, value = VIEW["filter"]
+        filter_text = f"{labels[field]} = {value}"
+    print(f"Filtr: {filter_text} | Sortowanie: {labels[sort_field]} {order}")
+
+#mm (edit:jo)
 def print_menu():
     print("\n" + "=" * 40)
     print("   CINESTREAM - KOLEKCJA FILMOWA   ")
     print("=" * 40)
+    print_view()
     print("1. Wyświetl kolekcję")
     print("2. Dodaj film")
     print("3. Filtruj (gatunek / platforma)")
@@ -45,9 +65,9 @@ def print_menu():
     print("6. Wyjście z programu")
     print("-" * 40)
 
-#mm
+#mm (edit:jo)
 def show_movies():
-    display_items(MOVIES)
+    display_items(apply_view(MOVIES, VIEW))
 
 #mm (edit:jo)
 def read_movie_data() -> dict:
@@ -72,8 +92,8 @@ def choose_filter_field() -> tuple[str, str]:
     choice = get_int_input(f"Wybierz kryterium [1-{len(FILTER_FIELDS)}]: ", 1, len(FILTER_FIELDS))
     return FILTER_FIELDS[choice]
 #jo (edit:mm)
-def choose_value(field: str, label: str) -> str | None:
-    values = get_field_values(MOVIES, field)
+def choose_value(items_list: list, field: str, label: str) -> str | None:
+    values = get_field_values(items_list, field)
     if not values:
         print(f"Brak wartości ({label}) w kolekcji.")
         return None
@@ -83,11 +103,16 @@ def choose_value(field: str, label: str) -> str | None:
     return values[choice - 1]
 
 #mm (edit:jo)
-def filter_movies():
+def filter_movies(items_list: list):
     field, label = choose_filter_field()
-    value = choose_value(field, label)
-    if value:
-        display_items(filter_by_field(MOVIES, field, value))
+    if field is None:
+        VIEW["filter"] = None
+    else:
+        value = choose_value(items_list, field, label)
+        if value is None:
+            return
+        VIEW["filter"] = (field, value)
+    display_items(apply_view(items_list, VIEW))
 
 #jo (edit:mm)
 def choose_sort_field() -> tuple[str, str]:
@@ -106,10 +131,10 @@ def choose_sort_order() -> bool:
     return SORT_ORDERS[choice][1]
 
 #jo (edit:mm)
-def sort_movies():
+def sort_movies(items_list: list):
     field, _ = choose_sort_field()
-    descending = choose_sort_order()
-    display_items(sort_by_field(MOVIES, field, descending))
+    VIEW["sort"] = (field, choose_sort_order())
+    display_items(apply_view(items_list, VIEW))
 
 #mm
 def print_watchlist_menu():
@@ -180,9 +205,9 @@ def handle_menu_choice(choice: str) -> bool:
         case "2":
             add_movie()
         case "3":
-            filter_movies()
+            filter_movies(MOVIES)
         case "4":
-            sort_movies()
+            sort_movies(MOVIES)
         case "5":
             watchlist_menu()
         case "6" | "q" | "exit":
