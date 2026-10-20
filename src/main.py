@@ -1,7 +1,10 @@
 #jo (edit:mm)
-from data import MOVIES
-from services import add_item, display_items, filter_by_field, get_field_values, save_items, sort_by_field
+from db import load_movies, save_movie
+from services import add_item, display_items, filter_by_field, get_field_values, sort_by_field
 from validators import get_float_input, get_int_input, get_non_empty_string
+
+#jo
+MOVIES = load_movies()
 
 #jo (edit:mm)
 FILTER_FIELDS = {
@@ -54,7 +57,7 @@ def read_movie_data() -> dict:
 #mm (edit:jo)
 def add_movie():
     added = add_item(MOVIES, read_movie_data())
-    save_items(MOVIES)
+    save_movie(added)
     print(f"Dodano film o ID {added['id']}.")
 #jo (edit:mm)
 def choose_filter_field() -> tuple[str, str]:
