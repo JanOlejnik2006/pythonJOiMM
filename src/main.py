@@ -8,9 +8,6 @@ from services import (
 from validators import get_float_input, get_int_input, get_non_empty_string
 
 #jo
-MOVIES = load_movies()
-
-#jo
 VIEW = {
     "filter": None,
     "sort": ("id", False),
@@ -67,7 +64,7 @@ def print_menu():
 
 #mm (edit:jo)
 def show_movies():
-    display_items(apply_view(MOVIES, VIEW))
+    display_items(apply_view(load_movies(), VIEW))
 
 #mm (edit:jo)
 def read_movie_data() -> dict:
@@ -81,7 +78,8 @@ def read_movie_data() -> dict:
 
 #mm (edit:jo)
 def add_movie():
-    added = add_item(MOVIES, read_movie_data())
+    movie_data = read_movie_data()
+    added = add_item(load_movies(), movie_data)
     save_movie(added)
     print(f"Dodano film o ID {added['id']}.")
 #jo (edit:mm)
@@ -165,12 +163,13 @@ def choose_movie(items_list: list) -> dict | None:
     choice = get_int_input(f"Wybierz film [1-{len(items_list)}]: ", 1, len(items_list))
     return items_list[choice - 1]
 
-#mm
+#mm (edit:jo)
 def watchlist_add():
-    movie = choose_movie(MOVIES)
+    movies = load_movies()
+    movie = choose_movie(movies)
     if movie is None:
         return
-    if add_to_watchlist(WATCHLIST, MOVIES, movie["id"]):
+    if add_to_watchlist(WATCHLIST, movies, movie["id"]):
         save_watchlist(WATCHLIST)
         print(f"Dodano film {movie['title']} do watchlisty.")
     else:
@@ -214,9 +213,9 @@ def handle_menu_choice(choice: str) -> bool:
         case "2":
             add_movie()
         case "3":
-            filter_movies(MOVIES)
+            filter_movies(load_movies())
         case "4":
-            sort_movies(MOVIES)
+            sort_movies(load_movies())
         case "5":
             watchlist_menu()
         case "6" | "q" | "exit":
