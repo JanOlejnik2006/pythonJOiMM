@@ -115,3 +115,9 @@ def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
 #jo
 def total_duration(items_list: list) -> int:
     return sum(item["duration"] for item in items_list)
+
+#mm
+def average_rating(items_list: list) -> float:
+    if not items_list:
+        return 0.0
+    return sum(item["rating"] for item in items_list) / len(items_list)
