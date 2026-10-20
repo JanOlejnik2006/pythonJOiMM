@@ -1,4 +1,6 @@
 #jo (edit:mm)
+from pymongo.errors import PyMongoError
+from data import VIEW
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
@@ -9,12 +11,6 @@ from validators import get_float_input, get_int_input, get_non_empty_string
 
 #mm
 WATCHLIST = load_watchlist()
-
-#jo
-VIEW = {
-    "filter": None,
-    "sort": ("id", False),
-}
 
 #jo (edit:mm)
 FILTER_FIELDS = {
@@ -240,8 +236,13 @@ def handle_menu_choice(choice: str) -> bool:
             print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
     return True
 
-#mm
+#mm (edit:jo)
 def main():
+    try:
+        load_movies()
+    except PyMongoError:
+        print("Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.")
+        return
     running = True
     while running:
         print_menu()

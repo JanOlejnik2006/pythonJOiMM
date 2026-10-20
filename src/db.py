@@ -5,7 +5,7 @@ from pymongo import MongoClient
 
 #jo
 load_dotenv()
-client = MongoClient(os.getenv("MONGODB_URI"))
+client = MongoClient(os.getenv("MONGODB_URI"), serverSelectionTimeoutMS=5000)
 collection = client[os.getenv("MONGO_DB")]["movies"]
 
 #jo
