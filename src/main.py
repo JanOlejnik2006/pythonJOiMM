@@ -170,7 +170,11 @@ def choose_movie(items_list: list) -> dict | None:
         return None
     for number, item in enumerate(items_list, start=1):
         print(f"{number}. {item['title']} ({item['duration']} min)")
-    choice = get_int_input(f"Wybierz film [1-{len(items_list)}]: ", 1, len(items_list))
+    print("0. Anuluj")
+    choice = get_int_input(f"Wybierz film [0-{len(items_list)}]: ", 0, len(items_list))
+    if choice == 0:
+        print("Anulowano.")
+        return None
     return items_list[choice - 1]
 
 #mm (edit:jo)
