@@ -15,6 +15,7 @@ DEFAULT_FIELDS = {
     "platform": "brak",
     "rating": 0.0,
     "duration": 0,
+    "release_date": "-",
 }
 
 #jo (edit:mm)

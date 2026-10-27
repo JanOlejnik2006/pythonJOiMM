@@ -7,7 +7,7 @@ from services import (
     average_rating, platform_summary, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import export_platform_report, load_watchlist, save_watchlist
-from validators import get_float_input, get_int_input, get_non_empty_string
+from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
 #mm
 WATCHLIST = load_watchlist()
@@ -27,6 +27,7 @@ SORT_FIELDS = {
     4: ("platform", "platforma"),
     5: ("rating", "ocena"),
     6: ("duration", "czas trwania"),
+    7: ("release_date", "data premiery"),
 }
 
 #jo(edit:mm)
@@ -75,6 +76,7 @@ def read_movie_data() -> dict:
         "platform": get_non_empty_string("Platforma VOD: "),
         "rating": get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10),
         "duration": get_int_input("Czas trwania [min]: ", 1, 600),
+        "release_date": get_date_input("Data premiery [RRRR-MM-DD]: "),
     }
 
 #mm (edit:jo)

@@ -1,6 +1,9 @@
 #jo
 import math
 
+#mm
+from datetime import datetime
+
 #jo (edit:mm)
 def get_int_input(prompt, min_val, max_val):
     while True:
@@ -50,3 +53,14 @@ def get_float_input(prompt: str, min_val: float = None, max_val: float = None) -
             print(f"Błąd: Wartość > {max_val}")
             continue
         return value
+
+#mm
+def get_date_input(prompt: str) -> str:
+    while True:
+        raw = input(prompt).strip()
+        try:
+            datetime.strptime(raw, "%Y-%m-%d")
+        except ValueError:
+            print("Błąd: Podaj datę w formacie RRRR-MM-DD, np. 2010-07-16")
+            continue
+        return raw
