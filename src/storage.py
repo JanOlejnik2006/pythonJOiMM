@@ -17,6 +17,20 @@ FIELDS = ["id", "title", "genre", "platform", "rating", "duration"]
 BACKUP_DIR = DATA_DIR / "backups"
 
 #mm
+EXPORTS_DIR = Path(__file__).resolve().parent.parent / "exports"
+REPORT_FIELDS = ["platforma", "liczba_filmow", "srednia_ocena", "najnizsza_ocena", "najwyzsza_ocena"]
+
+#mm
+def export_platform_report(rows: list) -> Path:
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    report_path = EXPORTS_DIR / "raport_platform.csv"
+    with open(report_path, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=REPORT_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return report_path
+
+#mm
 def backup_watchlist(keep: int = 3) -> Path | None:
     if not WATCHLIST_FILE.exists():
         return None

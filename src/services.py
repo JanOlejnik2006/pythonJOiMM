@@ -136,6 +136,20 @@ def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
     watchlist.remove(item)
     return True
 
+#mm
+def platform_summary(items_list: list) -> list:
+    summary = []
+    for platform in get_field_values(items_list, "platform"):
+        ratings = [item["rating"] for item in items_list if item["platform"] == platform]
+        summary.append({
+            "platforma": platform,
+            "liczba_filmow": len(ratings),
+            "srednia_ocena": round(sum(ratings) / len(ratings), 2),
+            "najnizsza_ocena": float(min(ratings)),
+            "najwyzsza_ocena": float(max(ratings)),
+        })
+    return summary
+
 #jo
 def total_duration(items_list: list) -> int:
     return sum(item["duration"] for item in items_list)
