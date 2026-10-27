@@ -259,7 +259,8 @@ def main():
     try:
         load_movies()
     except PyMongoError:
-        print("Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.")
+        print("Błąd: Brak połączenia z bazą danych. Sprawdź połączenie z internetem.")
+        print("Tryb offline będzie dostępny już niedługo.")
         return
     running = True
     while running:
