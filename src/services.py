@@ -1,3 +1,6 @@
+#mm
+import difflib
+
 #jo
 POLISH_LETTERS = str.maketrans("ąćęłńóśźż", "acelnoszz")
 
@@ -67,6 +70,14 @@ def search_items(items_list: list, query: str) -> list:
         if all(word in text for word in words):
             results.append(item)
     return results
+
+#mm
+def suggest_title(items_list: list, query: str) -> str | None:
+    titles = {normalize_text(item["title"]): item["title"] for item in items_list}
+    matches = difflib.get_close_matches(normalize_text(query), titles, n=1, cutoff=0.6)
+    if not matches:
+        return None
+    return titles[matches[0]]
 
 #jo
 def sort_by_field(items_list: list, field: str, descending: bool = False) -> list:
