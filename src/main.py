@@ -4,7 +4,7 @@ from data import VIEW
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    average_rating, remove_from_watchlist, search_items, total_duration,
+    average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import load_watchlist, save_watchlist
 from validators import get_float_input, get_int_input, get_non_empty_string
@@ -53,7 +53,7 @@ def print_menu():
     print("   CINESTREAM - KOLEKCJA FILMOWA   ")
     print("=" * 40)
     print_view()
-    print("1. Szukaj po tytule")
+    print("1. Szukaj filmu")
     print("2. Watchlista")
     print("3. Wyświetl kolekcję")
     print("4. Sortuj")
@@ -84,10 +84,14 @@ def add_movie():
     print(f"Dodano film o ID {added['id']}.")
 #mm
 def search_movies():
-    query = get_non_empty_string("Szukana fraza w tytule: ")
-    results = search_items(load_movies(), query)
+    query = get_non_empty_string("Szukaj (tytuł, gatunek lub platforma): ")
+    movies = load_movies()
+    results = search_items(movies, query)
     if not results:
-        print(f"Brak filmów z frazą '{query}' w tytule.")
+        print(f"Brak filmów dla frazy '{query}'.")
+        suggestion = suggest_title(movies, query)
+        if suggestion:
+            print(f"Czy chodziło o: {suggestion}?")
         return
     display_items(apply_view(results, VIEW))
 
