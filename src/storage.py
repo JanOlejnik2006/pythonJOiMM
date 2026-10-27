@@ -5,6 +5,9 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+#mm
+import shutil
+
 #jo
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 WATCHLIST_FILE = DATA_DIR / "watchlist.csv"
@@ -12,6 +15,20 @@ FIELDS = ["id", "title", "genre", "platform", "rating", "duration"]
 
 #jo
 BACKUP_DIR = DATA_DIR / "backups"
+
+#mm
+def backup_watchlist(keep: int = 3) -> Path | None:
+    if not WATCHLIST_FILE.exists():
+        return None
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = BACKUP_DIR / f"watchlist_{stamp}.bak"
+    shutil.copy2(WATCHLIST_FILE, backup_path)
+    backups = sorted(BACKUP_DIR.glob("watchlist_*.bak"))
+    while len(backups) > keep:
+        oldest = backups.pop(0)
+        oldest.unlink(missing_ok=True)
+    return backup_path
 
 #jo
 def minutes_to_hours(minutes: int) -> str:
@@ -24,9 +41,10 @@ def hours_to_minutes(text: str) -> int:
         return int(hours) * 60 + int(minutes)
     return int(text)
 
-#jo
+#jo (edit:mm)
 def save_watchlist(items_list: list) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    backup_watchlist()
     with tempfile.NamedTemporaryFile(
         mode="w",
         dir=DATA_DIR,
