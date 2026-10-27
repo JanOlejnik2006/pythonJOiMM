@@ -246,7 +246,7 @@ Przy pustym pliku program po prostu pokazał pustą watchlistę. W żadnym przyp
 * **Migracja danych** – `load_movies()` uzupełnia brakujące pola w starszych filmach z bazy (np. brak platformy → „brak”, brak czasu → 0 min).
 * **Czas w pliku watchlisty** – w `watchlist.csv` czas trwania zapisujemy jako godzina:minuta (np. `2:28`), a przy wczytywaniu zamieniamy go z powrotem na minuty. W programie czas dalej jest w minutach, a stare pliki z czasem w minutach (`148`) też się wczytują.
 * **Katalog filmów w MongoDB** – każdy zapis (`insert_one`) jest w bazie atomowy, więc tam nie trzeba plików tymczasowych.
-* **Brak internetu** – gdy nie ma połączenia z bazą, program pokazuje komunikat o braku internetu i informację, że tryb offline będzie dostępny już niedługo, zamiast się wywalać.
+* **Brak internetu** – gdy nie ma połączenia z bazą (przy starcie albo w trakcie działania), program pokazuje komunikat o braku internetu i informację, że tryb offline będzie dostępny już niedługo, zamiast się wywalać. Połączenie z bazą (`connect=False`) nawiązuje się dopiero przy pierwszym zapytaniu, więc brak internetu nie wywala programu już przy imporcie.
 * **Data premiery** – każdy film ma datę premiery (`RRRR-MM-DD`, sprawdzaną przez `get_date_input()`), widoczną w tabeli i dostępną w sortowaniu. Starsze filmy i stara watchlista bez tego pola dostają `-` (migracja przy wczytywaniu).
 
 **Kluczowy fragment kodu:**
@@ -297,8 +297,8 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, raport CSV z ocenami według platform, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2 – 11 commitów.
-* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta – 7 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 28 commitów, Mateusz Mazur 28 commitów.
+* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu – 8 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 29 commitów, Mateusz Mazur 28 commitów.
 
 
 **Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`) i 2.2 (zapis atomowy, rotacja kopii, kwarantanna), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
