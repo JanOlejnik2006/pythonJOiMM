@@ -1,3 +1,10 @@
+#jo
+POLISH_LETTERS = str.maketrans("ąćęłńóśźż", "acelnoszz")
+
+#jo
+def normalize_text(text: str) -> str:
+    return text.casefold().translate(POLISH_LETTERS)
+
 #mm
 def column_widths(items_list: list) -> dict:
     widths = {"title": len("Tytuł"), "genre": len("Gatunek"), "platform": len("Platforma")}
@@ -51,9 +58,15 @@ def add_item(items_list: list, new_item_data: dict) -> dict:
 def filter_by_field(items_list: list, field: str, value: str) -> list:
     return [item for item in items_list if item[field].lower() == value.lower()]
 
-#mm
-def search_by_title(items_list: list, query: str) -> list:
-    return [item for item in items_list if query.casefold() in item["title"].casefold()]
+#mm (edit:jo)
+def search_items(items_list: list, query: str) -> list:
+    words = normalize_text(query).split()
+    results = []
+    for item in items_list:
+        text = normalize_text(f"{item['title']} {item['genre']} {item['platform']}")
+        if all(word in text for word in words):
+            results.append(item)
+    return results
 
 #jo
 def sort_by_field(items_list: list, field: str, descending: bool = False) -> list:
