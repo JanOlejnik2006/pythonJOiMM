@@ -236,12 +236,71 @@ Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.
 ```
 Przy pustym pliku program po prostu pokazał pustą watchlistę. W żadnym przypadku nie było `Traceback` ani `FileNotFoundError` w konsoli.
 
+## 4a. Odporność persystencji (Laboratorium 2.2)
+
+**Co doszło:**
+* **Zapis atomowy** – `save_watchlist()` zapisuje najpierw do pliku tymczasowego (`tempfile`), wymusza zapis na dysk (`os.fsync`) i dopiero wtedy podmienia plik przez `os.replace`. Przerwanie programu w trakcie zapisu nie psuje starej watchlisty.
+* **Kopie zapasowe z rotacją** – przed każdym zapisem `backup_watchlist()` kopiuje plik do `data/backups/watchlist_RRRRMMDD_GGMMSS.bak` (`shutil.copy2`) i usuwa najstarsze, tak żeby zostały 3.
+* **Kwarantanna i auto-naprawa** – gdy `watchlist.csv` jest pusty albo uszkodzony, `repair_watchlist()` przenosi go do `data/corrupted_<data>.csv`, przywraca najnowszą dobrą kopię `.bak`, a gdy takiej nie ma, zaczyna od pustej watchlisty i pokazuje ostrzeżenie.
+* **Raport CSV** – opcja 7 w menu zapisuje do `exports/raport_platform.csv` podsumowanie ocen dla każdej platformy (liczba filmów, średnia, najniższa i najwyższa ocena). Raport uwzględnia ustawiony filtr.
+* **Migracja danych** – `load_movies()` uzupełnia brakujące pola w starszych filmach z bazy (np. brak platformy → „brak”, brak czasu → 0 min).
+* **Czas w pliku watchlisty** – w `watchlist.csv` czas trwania zapisujemy jako godzina:minuta (np. `2:28`), a przy wczytywaniu zamieniamy go z powrotem na minuty. W programie czas dalej jest w minutach, a stare pliki z czasem w minutach (`148`) też się wczytują.
+* **Katalog filmów w MongoDB** – każdy zapis (`insert_one`) jest w bazie atomowy, więc tam nie trzeba plików tymczasowych.
+* **Brak internetu** – gdy nie ma połączenia z bazą, program pokazuje komunikat o braku internetu i informację, że tryb offline będzie dostępny już niedługo, zamiast się wywalać.
+* **Data premiery** – każdy film ma datę premiery (`RRRR-MM-DD`, sprawdzaną przez `get_date_input()`), widoczną w tabeli i dostępną w sortowaniu. Starsze filmy i stara watchlista bez tego pola dostają `-` (migracja przy wczytywaniu).
+
+**Kluczowy fragment kodu:**
+```python
+def repair_watchlist() -> list:
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    corrupted_path = DATA_DIR / f"corrupted_{stamp}.csv"
+    os.replace(WATCHLIST_FILE, corrupted_path)
+    print(f"[OSTRZEŻENIE] Plik {WATCHLIST_FILE.name} jest uszkodzony, przeniesiono go do {corrupted_path.name}.")
+    for backup_path in sorted(BACKUP_DIR.glob("watchlist_*.bak"), reverse=True):
+        try:
+            watchlist = read_watchlist_file(backup_path)
+        except READ_ERRORS:
+            continue
+        save_watchlist(watchlist)
+        print(f"Przywrócono watchlistę z kopii {backup_path.name}.")
+        return watchlist
+    print("Brak dobrej kopii zapasowej, watchlista zaczyna się od nowa.")
+    save_watchlist([])
+    return []
+```
+Uszkodzonego pliku nie kasujemy, tylko odkładamy do kwarantanny, żeby można go było potem obejrzeć. Kopie sprawdzamy od najnowszej i bierzemy pierwszą, która się poprawnie wczytuje.
+
+**Test awaryjny:**
+* **Usunięcie pliku:** usunęliśmy folder `data/` → program wystartował z pustą watchlistą i sam utworzył `data/watchlist.csv`.
+* **Rotacja kopii:** dodaliśmy 4 filmy w osobnych uruchomieniach → w `data/backups/` zostały 3 najnowsze kopie.
+* **Uszkodzenie pliku:** w `watchlist.csv` wpisaliśmy `abc` zamiast id, a potem wyczyściliśmy plik do 0 bajtów:
+```text
+[OSTRZEŻENIE] Plik watchlist.csv jest uszkodzony, przeniesiono go do corrupted_20261027_185613.csv.
+Przywrócono watchlistę z kopii watchlist_20261027_185611.bak.
+1    Incepcja Sci-Fi  Netflix   148 min   9.0  HIT
+Łączny czas seansu: 2 h 28 min
+```
+* **Uszkodzenie pliku i wszystkich kopii:**
+```text
+[OSTRZEŻENIE] Plik watchlist.csv jest uszkodzony, przeniesiono go do corrupted_20261027_185613.csv.
+Brak dobrej kopii zapasowej, watchlista zaczyna się od nowa.
+```
+* **Przerwanie zapisu:** zasymulowaliśmy Ctrl+C w trakcie zapisu → stary `watchlist.csv` został cały, a niedokończony był tylko plik tymczasowy.
+* **Raport CSV** (`exports/raport_platform.csv`):
+```text
+platforma,liczba_filmow,srednia_ocena,najnizsza_ocena,najwyzsza_ocena
+Max,2,8.2,8.0,8.4
+Netflix,2,8.85,8.7,9.0
+brak,1,7.0,7.0,7.0
+```
+W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
+
 ## 5. Podział pracy (Zadanie 2)
-* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, sprawozdanie do Zadania 2 – 5 commitów.
-* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie) – 4 commity.
-* **Łącznie w repozytorium:** Jan Olejnik 25 commitów, Mateusz Mazur 22 commity.
+* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, raport CSV z ocenami według platform, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2 – 11 commitów.
+* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta – 7 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 28 commitów, Mateusz Mazur 28 commitów.
 
 
-**Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
+**Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`) i 2.2 (zapis atomowy, rotacja kopii, kwarantanna), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
 
 **Kurs online:** Udemy – Python for Beginners: https://www.udemy.com/course/pythonforbeginnersintro/
