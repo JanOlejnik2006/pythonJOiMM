@@ -256,19 +256,26 @@ def handle_menu_choice(choice: str) -> bool:
             print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
     return True
 
+#jo
+def print_offline_info():
+    print("Błąd: Brak połączenia z bazą danych. Sprawdź połączenie z internetem.")
+    print("Tryb offline będzie dostępny już niedługo.")
+
 #mm (edit:jo)
 def main():
     try:
         load_movies()
     except PyMongoError:
-        print("Błąd: Brak połączenia z bazą danych. Sprawdź połączenie z internetem.")
-        print("Tryb offline będzie dostępny już niedługo.")
+        print_offline_info()
         return
     running = True
     while running:
         print_menu()
         user_choice = input("Wybierz opcję [1-8]: ")
-        running = handle_menu_choice(user_choice)
+        try:
+            running = handle_menu_choice(user_choice)
+        except PyMongoError:
+            print_offline_info()
 
 #mm
 if __name__ == "__main__":
