@@ -14,6 +14,17 @@ FIELDS = ["id", "title", "genre", "platform", "rating", "duration"]
 BACKUP_DIR = DATA_DIR / "backups"
 
 #jo
+def minutes_to_hours(minutes: int) -> str:
+    return f"{minutes // 60}:{minutes % 60:02d}"
+
+#jo
+def hours_to_minutes(text: str) -> int:
+    if ":" in text:
+        hours, minutes = text.split(":")
+        return int(hours) * 60 + int(minutes)
+    return int(text)
+
+#jo
 def save_watchlist(items_list: list) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
@@ -27,7 +38,8 @@ def save_watchlist(items_list: list) -> None:
     ) as tmp:
         writer = csv.DictWriter(tmp, fieldnames=FIELDS, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(items_list)
+        for item in items_list:
+            writer.writerow({**item, "duration": minutes_to_hours(item["duration"])})
         tmp.flush()
         os.fsync(tmp.fileno())
         temp_path = tmp.name
@@ -48,7 +60,7 @@ def read_watchlist_file(path: Path) -> list:
             "genre": row["genre"],
             "platform": row["platform"],
             "rating": float(row["rating"]),
-            "duration": int(row["duration"]),
+            "duration": hours_to_minutes(row["duration"]),
         })
     return watchlist
 
