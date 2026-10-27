@@ -20,7 +20,7 @@ def column_widths(items_list: list) -> dict:
 def format_header(widths: dict) -> str:
     header = (
         f"{'ID':<4} {'Tytuł':<{widths['title']}} {'Gatunek':<{widths['genre']}} "
-        f"{'Platforma':<{widths['platform']}} {'Czas':>7} {'Ocena':>5}"
+        f"{'Platforma':<{widths['platform']}} {'Premiera':<10} {'Czas':>7} {'Ocena':>5}"
     )
     return header + "\n" + "-" * len(header)
 
@@ -31,7 +31,8 @@ HIT_THRESHOLD = 9
 def format_row(item: dict, widths: dict) -> str:
     row = (
         f"{item['id']:<4} {item['title']:<{widths['title']}} {item['genre']:<{widths['genre']}} "
-        f"{item['platform']:<{widths['platform']}} {item['duration']:>3} min {item['rating']:>5.1f}"
+        f"{item['platform']:<{widths['platform']}} {item['release_date']:<10} "
+        f"{item['duration']:>3} min {item['rating']:>5.1f}"
     )
     if item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
@@ -135,6 +136,20 @@ def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
         return False
     watchlist.remove(item)
     return True
+
+#mm
+def platform_summary(items_list: list) -> list:
+    summary = []
+    for platform in get_field_values(items_list, "platform"):
+        ratings = [item["rating"] for item in items_list if item["platform"] == platform]
+        summary.append({
+            "platforma": platform,
+            "liczba_filmow": len(ratings),
+            "srednia_ocena": round(sum(ratings) / len(ratings), 2),
+            "najnizsza_ocena": float(min(ratings)),
+            "najwyzsza_ocena": float(max(ratings)),
+        })
+    return summary
 
 #jo
 def total_duration(items_list: list) -> int:

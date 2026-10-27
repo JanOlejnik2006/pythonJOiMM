@@ -4,10 +4,10 @@ from data import VIEW
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
+    average_rating, platform_summary, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
-from storage import load_watchlist, save_watchlist
-from validators import get_float_input, get_int_input, get_non_empty_string
+from storage import export_platform_report, load_watchlist, save_watchlist
+from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
 #mm
 WATCHLIST = load_watchlist()
@@ -27,6 +27,7 @@ SORT_FIELDS = {
     4: ("platform", "platforma"),
     5: ("rating", "ocena"),
     6: ("duration", "czas trwania"),
+    7: ("release_date", "data premiery"),
 }
 
 #jo(edit:mm)
@@ -59,7 +60,8 @@ def print_menu():
     print("4. Sortuj")
     print("5. Filtruj")
     print("6. Dodaj film")
-    print("7. Wyjście z programu")
+    print("7. Eksport raportu CSV")
+    print("8. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -74,6 +76,7 @@ def read_movie_data() -> dict:
         "platform": get_non_empty_string("Platforma VOD: "),
         "rating": get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10),
         "duration": get_int_input("Czas trwania [min]: ", 1, 600),
+        "release_date": get_date_input("Data premiery [RRRR-MM-DD]: "),
     }
 
 #mm (edit:jo)
@@ -224,6 +227,12 @@ def watchlist_menu():
                 print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 6.")
 
 #mm
+def export_report():
+    rows = platform_summary(apply_view(load_movies(), VIEW))
+    report_path = export_platform_report(rows)
+    print(f"Zapisano raport ({len(rows)} platform) do pliku exports/{report_path.name}.")
+
+#mm
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
@@ -238,11 +247,13 @@ def handle_menu_choice(choice: str) -> bool:
             filter_movies(load_movies())
         case "6":
             add_movie()
-        case "7" | "q" | "exit":
+        case "7":
+            export_report()
+        case "8" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
     return True
 
 #mm (edit:jo)
@@ -250,12 +261,13 @@ def main():
     try:
         load_movies()
     except PyMongoError:
-        print("Błąd: Brak połączenia z bazą MongoDB. Sprawdź internet i plik .env.")
+        print("Błąd: Brak połączenia z bazą danych. Sprawdź połączenie z internetem.")
+        print("Tryb offline będzie dostępny już niedługo.")
         return
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-7]: ")
+        user_choice = input("Wybierz opcję [1-8]: ")
         running = handle_menu_choice(user_choice)
 
 #mm
