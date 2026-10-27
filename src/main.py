@@ -4,7 +4,7 @@ from data import VIEW
 from db import load_movies, save_movie
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    average_rating, remove_from_watchlist, search_by_title, total_duration,
+    average_rating, remove_from_watchlist, search_items, total_duration,
 )
 from storage import load_watchlist, save_watchlist
 from validators import get_float_input, get_int_input, get_non_empty_string
@@ -85,7 +85,7 @@ def add_movie():
 #mm
 def search_movies():
     query = get_non_empty_string("Szukana fraza w tytule: ")
-    results = search_by_title(load_movies(), query)
+    results = search_items(load_movies(), query)
     if not results:
         print(f"Brak filmów z frazą '{query}' w tytule.")
         return
