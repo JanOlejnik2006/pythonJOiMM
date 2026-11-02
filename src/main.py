@@ -5,10 +5,10 @@ from db import DEFAULT_FIELDS, load_movies, save_movie
 from network import is_online
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    average_rating, platform_summary, remove_from_watchlist, search_items, suggest_title, total_duration,
+    average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import (
-    export_platform_report, load_movies_cache, load_watchlist, save_movies_cache, save_watchlist,
+    load_movies_cache, load_watchlist, save_movies_cache, save_watchlist,
 )
 from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
@@ -83,8 +83,7 @@ def print_menu():
     print("4. Sortuj")
     print("5. Filtruj")
     print("6. Dodaj film")
-    print("7. Eksport raportu CSV")
-    print("8. Wyjście z programu")
+    print("7. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -253,12 +252,6 @@ def watchlist_menu():
                 print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 6.")
 
 #mm
-def export_report():
-    rows = platform_summary(apply_view(get_movies(), VIEW))
-    report_path = export_platform_report(rows)
-    print(f"Zapisano raport ({len(rows)} platform) do pliku exports/{report_path.name}.")
-
-#mm
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
@@ -273,13 +266,11 @@ def handle_menu_choice(choice: str) -> bool:
             filter_movies(get_movies())
         case "6":
             add_movie()
-        case "7":
-            export_report()
-        case "8" | "q" | "exit":
+        case "7" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
     return True
 
 #jo (edit:mm)
@@ -295,7 +286,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-8]: ")
+        user_choice = input("Wybierz opcję [1-7]: ")
         try:
             running = handle_menu_choice(user_choice)
         except PyMongoError:
