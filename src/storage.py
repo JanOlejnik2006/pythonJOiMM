@@ -189,3 +189,10 @@ def load_movies_cache() -> list:
         return []
     except CACHE_ERRORS:
         return repair_movies_cache()
+
+#jo
+def get_cache_update_time() -> str:
+    if not MOVIES_CACHE_FILE.exists():
+        return "brak"
+    mtime = MOVIES_CACHE_FILE.stat().st_mtime
+    return datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")

@@ -8,7 +8,8 @@ from services import (
     average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import (
-    load_movies_cache, load_watchlist, save_movies_cache, save_watchlist,
+    get_cache_update_time, load_movies_cache, load_watchlist,
+    save_movies_cache, save_watchlist,
 )
 from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
@@ -63,12 +64,10 @@ def print_view():
         filter_text = f"{labels[field]} = {value}"
     print(f"Filtr: {filter_text} | Sortowanie: {labels[sort_field]} {order}")
 
-#mm
+#mm (edit:jo)
 def print_status():
-    if STATUS["online"]:
-        print("Status: ONLINE")
-    else:
-        print("Status: OFFLINE")
+    status_text = "ONLINE" if STATUS["online"] else "OFFLINE"
+    print(f"Status: {status_text} | Lokalny zapis: {get_cache_update_time()}")
 
 #mm (edit:jo)
 def print_menu():
