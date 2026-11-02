@@ -110,10 +110,10 @@ def add_movie():
     added = add_item(get_movies(), movie_data)
     save_movie(added)
     print(f"Dodano film o ID {added['id']}.")
-#mm
+#mm (edit:jo)
 def search_movies():
     query = get_non_empty_string("Szukaj (tytuł, gatunek lub platforma): ")
-    movies = get_movies()
+    movies = apply_view(get_movies(), VIEW)
     results = search_items(movies, query)
     if not results:
         print(f"Brak filmów dla frazy '{query}'.")
@@ -121,7 +121,7 @@ def search_movies():
         if suggestion:
             print(f"Czy chodziło o: {suggestion}?")
         return
-    display_items(apply_view(results, VIEW))
+    display_items(results)
 
 #jo (edit:mm)
 def choose_filter_field() -> tuple[str, str]:
