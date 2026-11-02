@@ -242,7 +242,6 @@ Przy pustym pliku program po prostu pokazał pustą watchlistę. W żadnym przyp
 * **Zapis atomowy** – `save_watchlist()` zapisuje najpierw do pliku tymczasowego (`tempfile`), wymusza zapis na dysk (`os.fsync`) i dopiero wtedy podmienia plik przez `os.replace`. Przerwanie programu w trakcie zapisu nie psuje starej watchlisty.
 * **Kopie zapasowe z rotacją** – przed każdym zapisem `backup_watchlist()` kopiuje plik do `data/backups/watchlist_RRRRMMDD_GGMMSS.bak` (`shutil.copy2`) i usuwa najstarsze, tak żeby zostały 3.
 * **Kwarantanna i auto-naprawa** – gdy `watchlist.csv` jest pusty albo uszkodzony, `repair_watchlist()` przenosi go do `data/corrupted_<data>.csv`, przywraca najnowszą dobrą kopię `.bak`, a gdy takiej nie ma, zaczyna od pustej watchlisty i pokazuje ostrzeżenie.
-* **Raport CSV** – opcja 7 w menu zapisuje do `exports/raport_platform.csv` podsumowanie ocen dla każdej platformy (liczba filmów, średnia, najniższa i najwyższa ocena). Raport uwzględnia ustawiony filtr.
 * **Migracja danych** – `load_movies()` uzupełnia brakujące pola w starszych filmach z bazy (np. brak platformy → „brak”, brak czasu → 0 min).
 * **Czas w pliku watchlisty** – w `watchlist.csv` czas trwania zapisujemy jako godzina:minuta (np. `2:28`), a przy wczytywaniu zamieniamy go z powrotem na minuty. W programie czas dalej jest w minutach, a stare pliki z czasem w minutach (`148`) też się wczytują.
 * **Katalog filmów w MongoDB** – każdy zapis (`insert_one`) jest w bazie atomowy, więc tam nie trzeba plików tymczasowych.
@@ -286,13 +285,6 @@ Przywrócono watchlistę z kopii watchlist_20261027_185611.bak.
 Brak dobrej kopii zapasowej, watchlista zaczyna się od nowa.
 ```
 * **Przerwanie zapisu:** zasymulowaliśmy Ctrl+C w trakcie zapisu → stary `watchlist.csv` został cały, a niedokończony był tylko plik tymczasowy.
-* **Raport CSV** (`exports/raport_platform.csv`):
-```text
-platforma,liczba_filmow,srednia_ocena,najnizsza_ocena,najwyzsza_ocena
-Max,2,8.2,8.0,8.4
-Netflix,2,8.85,8.7,9.0
-brak,1,7.0,7.0,7.0
-```
 W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 
 ## 4b. Tryb offline (kopia filmów w JSON)
@@ -300,7 +292,7 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 **Jak działa:**
 * Po uruchomieniu program sprawdza internet jednym `ping` do `8.8.8.8` (`network.py`, limit 2 sekundy). To dużo szybciej niż czekanie, aż baza nie odpowie.
 * **Online** – filmy są pobierane z MongoDB i od razu zapisywane do `data/movies_cache.json`. Zapis jest atomowy (`tempfile` + `os.fsync` + `os.replace`), a przed każdą zmianą pliku robi się kopia `data/backups/movies_cache_<data>.bak` (zostają 3 najnowsze). Gdy dane się nie zmieniły, plik nie jest zapisywany drugi raz.
-* **Offline** – filmy są czytane z `movies_cache.json`. Działa wyświetlanie, szukanie, filtrowanie, sortowanie, watchlista i raport CSV, a dodawanie nowych filmów jest zablokowane z komunikatem.
+* **Offline** – filmy są czytane z `movies_cache.json`. Działa wyświetlanie, szukanie, filtrowanie, sortowanie, i watchlista, a dodawanie nowych filmów jest zablokowane z komunikatem.
 * W menu widać `Status: ONLINE` albo `Status: OFFLINE`. Gdy ping przejdzie, ale baza nie odpowie (albo internet zniknie w trakcie), program sam przełącza się na tryb offline.
 * Uszkodzony `movies_cache.json` trafia do `data/corrupted_movies_<data>.json` i jest odtwarzany z najnowszej dobrej kopii `.bak`. Starsze wpisy bez części pól dostają wartości domyślne (`DEFAULT_FIELDS`).
 
@@ -339,9 +331,9 @@ Przywrócono filmy z kopii movies_cache_20261102_181759.bak.
 Bez internetu program startuje w około 2 sekundy i nie pokazuje żadnego `Traceback`.
 
 ## 5. Podział pracy (Zadanie 2)
-* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, raport CSV z ocenami według platform, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline – 14 commitów.
+* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, drobne poprawki – 15 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak – 11 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 32 commity, Mateusz Mazur 31 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 32 commity, Mateusz Mazur 32 commity.
 
 
 **Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`) i 2.2 (zapis atomowy, rotacja kopii, kwarantanna), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
