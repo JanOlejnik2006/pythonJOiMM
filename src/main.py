@@ -1,17 +1,31 @@
 #jo (edit:mm)
 from pymongo.errors import PyMongoError
 from data import STATUS, VIEW
-from db import load_movies, save_movie
+from db import DEFAULT_FIELDS, load_movies, save_movie
 from network import is_online
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
     average_rating, platform_summary, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
-from storage import export_platform_report, load_watchlist, save_watchlist
+from storage import (
+    export_platform_report, load_movies_cache, load_watchlist, save_movies_cache, save_watchlist,
+)
 from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
 #mm
 WATCHLIST = load_watchlist()
+
+#mm
+def get_movies() -> list:
+    if STATUS["online"]:
+        try:
+            movies = load_movies()
+            save_movies_cache(movies)
+            return movies
+        except PyMongoError:
+            STATUS["online"] = False
+            print("Utracono połączenie z bazą, przełączam na tryb offline.")
+    return [{**DEFAULT_FIELDS, **movie} for movie in load_movies_cache()]
 
 #jo (edit:mm)
 FILTER_FIELDS = {
@@ -75,7 +89,7 @@ def print_menu():
 
 #mm (edit:jo)
 def show_movies():
-    display_items(apply_view(load_movies(), VIEW))
+    display_items(apply_view(get_movies(), VIEW))
 
 #mm (edit:jo)
 def read_movie_data() -> dict:
@@ -90,14 +104,17 @@ def read_movie_data() -> dict:
 
 #mm (edit:jo)
 def add_movie():
+    if not STATUS["online"]:
+        print("Błąd: Dodawanie filmów działa tylko w trybie online.")
+        return
     movie_data = read_movie_data()
-    added = add_item(load_movies(), movie_data)
+    added = add_item(get_movies(), movie_data)
     save_movie(added)
     print(f"Dodano film o ID {added['id']}.")
 #mm
 def search_movies():
     query = get_non_empty_string("Szukaj (tytuł, gatunek lub platforma): ")
-    movies = load_movies()
+    movies = get_movies()
     results = search_items(movies, query)
     if not results:
         print(f"Brak filmów dla frazy '{query}'.")
@@ -195,7 +212,7 @@ def choose_movie(items_list: list) -> dict | None:
 
 #mm (edit:jo)
 def watchlist_add():
-    movies = load_movies()
+    movies = get_movies()
     movie = choose_movie(movies)
     if movie is None:
         return
@@ -237,7 +254,7 @@ def watchlist_menu():
 
 #mm
 def export_report():
-    rows = platform_summary(apply_view(load_movies(), VIEW))
+    rows = platform_summary(apply_view(get_movies(), VIEW))
     report_path = export_platform_report(rows)
     print(f"Zapisano raport ({len(rows)} platform) do pliku exports/{report_path.name}.")
 
@@ -251,9 +268,9 @@ def handle_menu_choice(choice: str) -> bool:
         case "3":
             show_movies()
         case "4":
-            sort_movies(load_movies())
+            sort_movies(get_movies())
         case "5":
-            filter_movies(load_movies())
+            filter_movies(get_movies())
         case "6":
             add_movie()
         case "7":
@@ -265,17 +282,16 @@ def handle_menu_choice(choice: str) -> bool:
             print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
     return True
 
-#jo
+#jo (edit:mm)
 def print_offline_info():
-    print("Błąd: Brak połączenia z bazą danych. Sprawdź połączenie z internetem.")
-    print("Tryb offline będzie dostępny już niedługo.")
+    print("Brak połączenia z internetem. Działasz w trybie offline.")
+    print("Filmy są wczytywane z ostatniej kopii zapisanej na dysku.")
 
 #mm (edit:jo)
 def main():
     STATUS["online"] = is_online()
     if not STATUS["online"]:
         print_offline_info()
-        return
     running = True
     while running:
         print_menu()
@@ -283,6 +299,7 @@ def main():
         try:
             running = handle_menu_choice(user_choice)
         except PyMongoError:
+            STATUS["online"] = False
             print_offline_info()
 
 #mm
