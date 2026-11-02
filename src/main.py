@@ -1,7 +1,8 @@
 #jo (edit:mm)
 from pymongo.errors import PyMongoError
-from data import VIEW
+from data import STATUS, VIEW
 from db import load_movies, save_movie
+from network import is_online
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, get_field_values,
     average_rating, platform_summary, remove_from_watchlist, search_items, suggest_title, total_duration,
@@ -48,11 +49,19 @@ def print_view():
         filter_text = f"{labels[field]} = {value}"
     print(f"Filtr: {filter_text} | Sortowanie: {labels[sort_field]} {order}")
 
+#mm
+def print_status():
+    if STATUS["online"]:
+        print("Status: ONLINE")
+    else:
+        print("Status: OFFLINE")
+
 #mm (edit:jo)
 def print_menu():
     print("\n" + "=" * 40)
     print("   CINESTREAM - KOLEKCJA FILMOWA   ")
     print("=" * 40)
+    print_status()
     print_view()
     print("1. Szukaj filmu")
     print("2. Watchlista")
@@ -263,9 +272,8 @@ def print_offline_info():
 
 #mm (edit:jo)
 def main():
-    try:
-        load_movies()
-    except PyMongoError:
+    STATUS["online"] = is_online()
+    if not STATUS["online"]:
         print_offline_info()
         return
     running = True
