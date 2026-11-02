@@ -1,5 +1,6 @@
 #jo
 import csv
+import json
 import os
 import tempfile
 from datetime import datetime
@@ -16,6 +17,7 @@ FIELDS = REQUIRED_FIELDS + ["release_date"]
 
 #jo
 BACKUP_DIR = DATA_DIR / "backups"
+MOVIES_CACHE_FILE = DATA_DIR / "movies_cache.json"
 
 #mm
 EXPORTS_DIR = Path(__file__).resolve().parent.parent / "exports"
@@ -128,3 +130,38 @@ def load_watchlist() -> list:
         return []
     except READ_ERRORS:
         return repair_watchlist()
+
+#jo
+def backup_movies_cache(keep: int = 3) -> Path | None:
+    if not MOVIES_CACHE_FILE.exists():
+        return None
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = BACKUP_DIR / f"movies_cache_{stamp}.bak"
+    shutil.copy2(MOVIES_CACHE_FILE, backup_path)
+    backups = sorted(BACKUP_DIR.glob("movies_cache_*.bak"))
+    while len(backups) > keep:
+        oldest = backups.pop(0)
+        oldest.unlink(missing_ok=True)
+    return backup_path
+
+#jo
+def save_movies_cache(movies: list) -> None:
+    text = json.dumps(movies, indent=4, ensure_ascii=False)
+    if MOVIES_CACHE_FILE.exists() and MOVIES_CACHE_FILE.read_text(encoding="utf-8") == text:
+        return
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    backup_movies_cache()
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        dir=DATA_DIR,
+        prefix="movies_tmp_",
+        suffix=".json",
+        delete=False,
+        encoding="utf-8",
+    ) as tmp:
+        tmp.write(text)
+        tmp.flush()
+        os.fsync(tmp.fileno())
+        temp_path = tmp.name
+    os.replace(temp_path, MOVIES_CACHE_FILE)
