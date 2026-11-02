@@ -7,7 +7,7 @@ Autorzy: Mateusz Mazur, Jan Olejnik
 Uruchomienie: `python src/main.py`
 
 
-##Ostatnio dodane:
+## Ostatnio dodane:
 - tryb offline
 - zapis atomowy i backupy
 - usprawniona wyszukiwarka
