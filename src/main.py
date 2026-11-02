@@ -8,18 +8,37 @@ from services import (
     average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import (
-    get_cache_update_time, load_movies_cache, load_watchlist,
-    save_movies_cache, save_watchlist,
+    get_cache_update_time, load_movies_cache, load_pending_movies,
+    load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
 )
 from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
 
 #mm
 WATCHLIST = load_watchlist()
 
-#mm
+#jo
+def sync_pending_movies() -> int:
+    pending = load_pending_movies()
+    if not pending:
+        return 0
+    synced = 0
+    remaining = []
+    for movie in pending:
+        try:
+            save_movie(movie)
+            synced += 1
+        except PyMongoError:
+            remaining.append(movie)
+    save_pending_movies(remaining)
+    return synced
+
+#mm (edit:jo)
 def get_movies() -> list:
     if STATUS["online"]:
         try:
+            synced = sync_pending_movies()
+            if synced > 0:
+                print(f"Wysłano {synced} film(ów) z kolejki lokalnej do bazy.")
             movies = load_movies()
             save_movies_cache(movies)
             return movies
@@ -103,13 +122,22 @@ def read_movie_data() -> dict:
 
 #mm (edit:jo)
 def add_movie():
-    if not STATUS["online"]:
-        print("Błąd: Dodawanie filmów działa tylko w trybie online.")
-        return
     movie_data = read_movie_data()
-    added = add_item(get_movies(), movie_data)
-    save_movie(added)
-    print(f"Dodano film o ID {added['id']}.")
+    movies = get_movies()
+    added = add_item(movies, movie_data)
+    save_movies_cache(movies)
+    if STATUS["online"]:
+        try:
+            save_movie(added)
+            print(f"Dodano film o ID {added['id']}.")
+            return
+        except PyMongoError:
+            STATUS["online"] = False
+            print("Utracono połączenie z bazą.")
+    pending = load_pending_movies()
+    pending.append(added)
+    save_pending_movies(pending)
+    print(f"Zapisano lokalnie film o ID {added['id']}. Zostanie wysłany na serwer po połączeniu z internetem.")
 #mm (edit:jo)
 def search_movies():
     query = get_non_empty_string("Szukaj (tytuł, gatunek lub platforma): ")
@@ -275,12 +303,15 @@ def handle_menu_choice(choice: str) -> bool:
             print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
     return True
 
-#mm
+#mm (edit:jo)
 def reconnect():
     if not is_online():
         print("Błąd: Nadal brak połączenia z internetem.")
         return
     try:
+        synced = sync_pending_movies()
+        if synced > 0:
+            print(f"Wysłano {synced} film(ów) z kolejki lokalnej do bazy.")
         movies = load_movies()
         save_movies_cache(movies)
         STATUS["online"] = True

@@ -18,6 +18,7 @@ FIELDS = REQUIRED_FIELDS + ["release_date"]
 #jo
 BACKUP_DIR = DATA_DIR / "backups"
 MOVIES_CACHE_FILE = DATA_DIR / "movies_cache.json"
+PENDING_MOVIES_FILE = DATA_DIR / "pending_movies.json"
 
 #mm
 def backup_watchlist(keep: int = 3) -> Path | None:
@@ -196,3 +197,31 @@ def get_cache_update_time() -> str:
         return "brak"
     mtime = MOVIES_CACHE_FILE.stat().st_mtime
     return datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+
+#jo
+def load_pending_movies() -> list:
+    if not PENDING_MOVIES_FILE.exists():
+        return []
+    try:
+        with open(PENDING_MOVIES_FILE, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            return data if isinstance(data, list) else []
+    except (ValueError, UnicodeDecodeError):
+        return []
+
+#jo
+def save_pending_movies(movies: list) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        dir=DATA_DIR,
+        prefix="pending_tmp_",
+        suffix=".json",
+        delete=False,
+        encoding="utf-8",
+    ) as tmp:
+        json.dump(movies, tmp, indent=4, ensure_ascii=False)
+        tmp.flush()
+        os.fsync(tmp.fileno())
+        temp_path = tmp.name
+    os.replace(temp_path, PENDING_MOVIES_FILE)
