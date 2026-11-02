@@ -64,13 +64,21 @@ def filter_by_field(items_list: list, field: str, value: str) -> list:
 
 #mm (edit:jo)
 def search_items(items_list: list, query: str) -> list:
-    words = normalize_text(query).split()
-    results = []
+    clean_query = normalize_text(query).strip()
+    words = clean_query.split()
+    if not words:
+        return []
+    starts_with = []
+    others = []
     for item in items_list:
         text = normalize_text(f"{item['title']} {item['genre']} {item['platform']}")
         if all(word in text for word in words):
-            results.append(item)
-    return results
+            norm_title = normalize_text(item["title"])
+            if norm_title.startswith(clean_query) or norm_title.startswith(words[0]):
+                starts_with.append(item)
+            else:
+                others.append(item)
+    return starts_with + others
 
 #mm
 def suggest_title(items_list: list, query: str) -> str | None:
