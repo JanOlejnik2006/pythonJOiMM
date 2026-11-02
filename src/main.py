@@ -4,8 +4,8 @@ from data import STATUS, VIEW
 from db import DEFAULT_FIELDS, load_movies, save_movie
 from network import is_online
 from services import (
-    add_item, add_to_watchlist, apply_view, display_items, get_field_values,
-    average_rating, remove_from_watchlist, search_items, suggest_title, total_duration,
+    add_item, add_to_watchlist, apply_view, display_items, find_by_id, get_field_values,
+    average_rating, next_id, remove_from_watchlist, search_items, suggest_title, total_duration,
 )
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
@@ -21,11 +21,16 @@ def sync_pending_movies() -> int:
     pending = load_pending_movies()
     if not pending:
         return 0
+    movies = load_movies()
     synced = 0
     remaining = []
     for movie in pending:
+        if find_by_id(movies, movie["id"]) is not None:
+            movie["id"] = next_id(movies)
+            print(f"Film {movie['title']} dostał nowe ID {movie['id']}, bo poprzednie było już zajęte.")
         try:
             save_movie(movie)
+            movies.append(movie)
             synced += 1
         except PyMongoError:
             remaining.append(movie)
