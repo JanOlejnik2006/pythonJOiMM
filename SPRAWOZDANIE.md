@@ -295,10 +295,53 @@ brak,1,7.0,7.0,7.0
 ```
 W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 
+## 4b. Tryb offline (kopia filmów w JSON)
+
+**Jak działa:**
+* Po uruchomieniu program sprawdza internet jednym `ping` do `8.8.8.8` (`network.py`, limit 2 sekundy). To dużo szybciej niż czekanie, aż baza nie odpowie.
+* **Online** – filmy są pobierane z MongoDB i od razu zapisywane do `data/movies_cache.json`. Zapis jest atomowy (`tempfile` + `os.fsync` + `os.replace`), a przed każdą zmianą pliku robi się kopia `data/backups/movies_cache_<data>.bak` (zostają 3 najnowsze). Gdy dane się nie zmieniły, plik nie jest zapisywany drugi raz.
+* **Offline** – filmy są czytane z `movies_cache.json`. Działa wyświetlanie, szukanie, filtrowanie, sortowanie, watchlista i raport CSV, a dodawanie nowych filmów jest zablokowane z komunikatem.
+* W menu widać `Status: ONLINE` albo `Status: OFFLINE`. Gdy ping przejdzie, ale baza nie odpowie (albo internet zniknie w trakcie), program sam przełącza się na tryb offline.
+* Uszkodzony `movies_cache.json` trafia do `data/corrupted_movies_<data>.json` i jest odtwarzany z najnowszej dobrej kopii `.bak`. Starsze wpisy bez części pól dostają wartości domyślne (`DEFAULT_FIELDS`).
+
+**Kluczowy fragment kodu:**
+```python
+def get_movies() -> list:
+    if STATUS["online"]:
+        try:
+            movies = load_movies()
+            save_movies_cache(movies)
+            return movies
+        except PyMongoError:
+            STATUS["online"] = False
+            print("Utracono połączenie z bazą, przełączam na tryb offline.")
+    return [{**DEFAULT_FIELDS, **movie} for movie in load_movies_cache()]
+```
+Jedna funkcja decyduje, skąd brać filmy, więc reszta programu nie musi wiedzieć, czy jest online, czy offline.
+
+**Test trybu offline:**
+```text
+Brak połączenia z internetem. Działasz w trybie offline.
+Filmy są wczytywane z ostatniej kopii zapisanej na dysku.
+Status: OFFLINE
+1    Incepcja  Sci-Fi      Netflix   2010-07-16 148 min   9.0  HIT
+2    Gladiator Historyczny Max       2000-05-05 155 min   8.0
+3    Joker     Dramat      Max       2019-10-04 122 min   8.4
+...
+Wybierz opcję [1-8]: 6
+Błąd: Dodawanie filmów działa tylko w trybie online.
+```
+Uszkodzona kopia:
+```text
+[OSTRZEŻENIE] Plik movies_cache.json jest uszkodzony, przeniesiono go do corrupted_movies_20261102_181759.json.
+Przywrócono filmy z kopii movies_cache_20261102_181759.bak.
+```
+Bez internetu program startuje w około 2 sekundy i nie pokazuje żadnego `Traceback`.
+
 ## 5. Podział pracy (Zadanie 2)
-* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, raport CSV z ocenami według platform, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2 – 11 commitów.
-* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu – 8 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 29 commitów, Mateusz Mazur 28 commitów.
+* **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, raport CSV z ocenami według platform, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline – 14 commitów.
+* **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak – 11 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 32 commity, Mateusz Mazur 31 commitów.
 
 
 **Źródła (Zadanie 2):** slajdy do Laboratorium 2.1 (moduł `storage.py`, `csv.DictReader`/`DictWriter`, `pathlib`, obsługa `FileNotFoundError`) i 2.2 (zapis atomowy, rotacja kopii, kwarantanna), dokumentacja Pythona – moduł `csv`: https://docs.python.org/3/library/csv.html
