@@ -165,3 +165,41 @@ def save_movies_cache(movies: list) -> None:
         os.fsync(tmp.fileno())
         temp_path = tmp.name
     os.replace(temp_path, MOVIES_CACHE_FILE)
+
+#jo
+CACHE_ERRORS = (ValueError, UnicodeDecodeError)
+
+#jo
+def read_movies_cache(path: Path) -> list:
+    with open(path, mode="r", encoding="utf-8") as file:
+        movies = json.load(file)
+    if not isinstance(movies, list):
+        raise ValueError("Zły format kopii filmów")
+    return movies
+
+#jo
+def repair_movies_cache() -> list:
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    corrupted_path = DATA_DIR / f"corrupted_movies_{stamp}.json"
+    os.replace(MOVIES_CACHE_FILE, corrupted_path)
+    print(f"[OSTRZEŻENIE] Plik {MOVIES_CACHE_FILE.name} jest uszkodzony, przeniesiono go do {corrupted_path.name}.")
+    for backup_path in sorted(BACKUP_DIR.glob("movies_cache_*.bak"), reverse=True):
+        try:
+            movies = read_movies_cache(backup_path)
+        except CACHE_ERRORS:
+            continue
+        save_movies_cache(movies)
+        print(f"Przywrócono filmy z kopii {backup_path.name}.")
+        return movies
+    print("Brak dobrej kopii zapasowej filmów.")
+    return []
+
+#jo
+def load_movies_cache() -> list:
+    try:
+        return read_movies_cache(MOVIES_CACHE_FILE)
+    except FileNotFoundError:
+        print("Brak zapisanej kopii filmów. Połącz się z internetem, żeby ją pobrać.")
+        return []
+    except CACHE_ERRORS:
+        return repair_movies_cache()
