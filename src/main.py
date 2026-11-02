@@ -82,7 +82,8 @@ def print_menu():
     print("4. Sortuj")
     print("5. Filtruj")
     print("6. Dodaj film")
-    print("7. Wyjście z programu")
+    print("7. Połącz z bazą (online)")
+    print("8. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -265,12 +266,28 @@ def handle_menu_choice(choice: str) -> bool:
             filter_movies(get_movies())
         case "6":
             add_movie()
-        case "7" | "q" | "exit":
+        case "7":
+            reconnect()
+        case "8" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
     return True
+
+#mm
+def reconnect():
+    if not is_online():
+        print("Błąd: Nadal brak połączenia z internetem.")
+        return
+    try:
+        movies = load_movies()
+        save_movies_cache(movies)
+        STATUS["online"] = True
+        print("Połączono z bazą MongoDB. Tryb ONLINE aktywny.")
+    except PyMongoError:
+        STATUS["online"] = False
+        print("Błąd: Internet działa, ale baza MongoDB nie odpowiada.")
 
 #jo (edit:mm)
 def print_offline_info():
@@ -285,7 +302,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-7]: ")
+        user_choice = input("Wybierz opcję [1-8]: ")
         try:
             running = handle_menu_choice(user_choice)
         except PyMongoError:
