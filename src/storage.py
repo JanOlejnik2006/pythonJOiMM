@@ -8,12 +8,13 @@ from pathlib import Path
 
 #mm
 import shutil
+from models import MediaTitle, Watchlist
 
 #jo
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-WATCHLIST_FILE = DATA_DIR / "watchlist.csv"
+WATCHLIST_FILE = DATA_DIR / "watchlist.json"
+OLD_WATCHLIST_FILE = DATA_DIR / "watchlist.csv"
 REQUIRED_FIELDS = ["id", "title", "genre", "platform", "rating", "duration"]
-FIELDS = REQUIRED_FIELDS + ["release_date", "is_watched"]
 
 #jo
 BACKUP_DIR = DATA_DIR / "backups"
@@ -45,30 +46,39 @@ def hours_to_minutes(text: str) -> int:
         return int(hours) * 60 + int(minutes)
     return int(text)
 
-#jo (edit:mm)
-def save_watchlist(items_list: list) -> None:
+#mm
+def save_watchlist(watchlist: Watchlist) -> None:
+    data = watchlist.to_dict()
+    for item in data["items"]:
+        item["duration"] = minutes_to_hours(item["duration"])
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     backup_watchlist()
     with tempfile.NamedTemporaryFile(
         mode="w",
         dir=DATA_DIR,
         prefix="watchlist_tmp_",
-        suffix=".csv",
+        suffix=".json",
         delete=False,
-        newline="",
         encoding="utf-8",
     ) as tmp:
-        writer = csv.DictWriter(tmp, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        for item in items_list:
-            writer.writerow({**item, "duration": minutes_to_hours(item["duration"])})
+        json.dump(data, tmp, indent=4, ensure_ascii=False)
         tmp.flush()
         os.fsync(tmp.fileno())
         temp_path = tmp.name
     os.replace(temp_path, WATCHLIST_FILE)
 
+#mm
+def read_watchlist_file(path: Path) -> Watchlist:
+    with open(path, mode="r", encoding="utf-8") as file:
+        data = json.load(file)
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        raise ValueError("Zły format watchlisty")
+    for item in data["items"]:
+        item["duration"] = hours_to_minutes(str(item["duration"]))
+    return Watchlist.from_dict(data)
+
 #jo (edit:mm)
-def read_watchlist_file(path: Path) -> list:
+def read_old_watchlist_csv(path: Path) -> list:
     with open(path, mode="r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         if reader.fieldnames is None or not set(REQUIRED_FIELDS).issubset(reader.fieldnames):
@@ -88,13 +98,13 @@ def read_watchlist_file(path: Path) -> list:
         })
     return watchlist
 
-#jo
-READ_ERRORS = (KeyError, ValueError, TypeError, csv.Error, UnicodeDecodeError)
+#jo (edit:mm)
+READ_ERRORS = (KeyError, ValueError, TypeError, AttributeError, csv.Error, UnicodeDecodeError)
 
-#jo
-def repair_watchlist() -> list:
+#jo (edit:mm)
+def repair_watchlist() -> Watchlist:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    corrupted_path = DATA_DIR / f"corrupted_{stamp}.csv"
+    corrupted_path = DATA_DIR / f"corrupted_{stamp}.json"
     os.replace(WATCHLIST_FILE, corrupted_path)
     print(f"[OSTRZEŻENIE] Plik {WATCHLIST_FILE.name} jest uszkodzony, przeniesiono go do {corrupted_path.name}.")
     for backup_path in sorted(BACKUP_DIR.glob("watchlist_*.bak"), reverse=True):
@@ -106,16 +116,32 @@ def repair_watchlist() -> list:
         print(f"Przywrócono watchlistę z kopii {backup_path.name}.")
         return watchlist
     print("Brak dobrej kopii zapasowej, watchlista zaczyna się od nowa.")
-    save_watchlist([])
-    return []
+    watchlist = Watchlist()
+    save_watchlist(watchlist)
+    return watchlist
 
-#jo
-def load_watchlist() -> list:
+#mm
+def migrate_old_watchlist() -> Watchlist:
+    try:
+        movies = [MediaTitle.from_dict(row) for row in read_old_watchlist_csv(OLD_WATCHLIST_FILE)]
+    except READ_ERRORS:
+        print(f"[OSTRZEŻENIE] Nie udało się wczytać starego pliku {OLD_WATCHLIST_FILE.name}.")
+        movies = []
+    watchlist = Watchlist(items=movies)
+    save_watchlist(watchlist)
+    print(f"Przeniesiono watchlistę z {OLD_WATCHLIST_FILE.name} do {WATCHLIST_FILE.name}.")
+    return watchlist
+
+#jo (edit:mm)
+def load_watchlist() -> Watchlist:
     try:
         return read_watchlist_file(WATCHLIST_FILE)
     except FileNotFoundError:
-        save_watchlist([])
-        return []
+        if OLD_WATCHLIST_FILE.exists():
+            return migrate_old_watchlist()
+        watchlist = Watchlist()
+        save_watchlist(watchlist)
+        return watchlist
     except READ_ERRORS:
         return repair_watchlist()
 

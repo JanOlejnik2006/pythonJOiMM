@@ -292,4 +292,65 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, ponowne łączenie online w menu, drobne poprawki – 16 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak, priorytet wyników zaczynających się od szukanej frazy, data aktualizacji lokalnego zapisu w menu, usunięcie zbędnych źródeł, kolejkowanie dodawania filmów offline, poprawka zajętych ID przy wysyłaniu kolejki – 17 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 38 commitów, Mateusz Mazur 33 commity.
+* **Łącznie w repozytorium:** Jan Olejnik 41 commitów, Mateusz Mazur 38 commitów (razem z Zadaniem 3).
+
+---
+---
+
+# Zadanie 3 – Programowanie obiektowe (OOP)
+
+## 1. Cel
+Zamiast samych słowników mamy teraz klasy w `src/models.py`. Film to obiekt `MediaTitle`, który sam pilnuje poprawności swoich danych, a watchlista to agregat `Watchlist`, który zarządza listą filmów. Program dalej korzysta z MongoDB, a watchlista jest zapisywana jako zagnieżdżony JSON.
+
+## 2. Zmiany w strukturze plików
+* `src/models.py` – nowy moduł z dwiema klasami:
+  * `MediaTitle` (encja): ID, tytuł, gatunek, platforma, czas trwania, data premiery (z niej liczony jest `year`), `is_watched` i ocena. Pola są chronione przez `@property` z setterami, ID jest tylko do odczytu (bez settera), a `__slots__` blokuje dopisywanie nowych pól. Ma `__repr__`, `__str__`, `__eq__` (po ID), `__lt__` (sortowanie po ocenie malejąco) oraz `to_dict()` i `from_dict()`.
+  * `Watchlist` (agregat): dodaje filmy bez duplikatów (`__eq__`), usuwa, oznacza jako obejrzane (`mark_watched`), liczy `total_runtime_hours()` i średnią ocen, ma `to_dict()`/`from_dict()` z zagnieżdżoną listą filmów.
+* `test_models.py` – autotesty modeli, uruchamiane przez `python test_models.py`.
+* `src/storage.py` – watchlista zapisuje się do `data/watchlist.json` w formacie `{"name": ..., "items": [...]}` (zapis atomowy, kopie `.bak`, kwarantanna jak wcześniej). Stary `watchlist.csv` przenosi się sam przy pierwszym uruchomieniu.
+* `src/db.py` – filmy z bazy przechodzą przez `MediaTitle` (`normalize_movies`), a `update_movie()` zapisuje ocenę w bazie.
+* `src/main.py` – przy dodawaniu filmu program pyta, czy jest obejrzany (ocena tylko dla obejrzanych). W watchliście doszła opcja „Oznacz jako obejrzany i oceń”.
+
+## 3. Kluczowy fragment kodu
+```python
+@rating.setter
+def rating(self, value: float | None) -> None:
+    """Niezmiennik: ocenę można dać tylko obejrzanemu filmowi."""
+    if value is None:
+        self._rating = None
+        return
+    if not self._is_watched:
+        raise ValueError("Nie można ocenić filmu, który nie jest obejrzany.")
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError("Ocena musi być liczbą.")
+    if not 1.0 <= value <= 10.0:
+        raise ValueError(f"Ocena musi być w zakresie 1.0-10.0 (podano: {value}).")
+    self._rating = round(float(value), 1)
+```
+
+**Uzasadnienie wyboru:**  
+To niezmiennik z zadania: oceny 1.0–10.0 nie da się przypisać filmowi, który nie jest obejrzany, bo setter od razu rzuca `ValueError`. Dzięki temu żadna część programu nie może doprowadzić filmu do złego stanu, a menu nie musi tego osobno sprawdzać.
+
+## 4. Testy
+* **Autotesty** (`python test_models.py`): poprawne tworzenie obiektów, odrzucenie błędnych danych (`ValueError`), sortowanie przez `__lt__`, round-trip `to_dict()`/`from_dict()` oraz dodatkowo duplikaty, niezmienne ID i `__slots__`:
+```text
+[OK]   test_1_poprawne_tworzenie
+[OK]   test_2_odrzucenie_blednych_danych
+[OK]   test_3_sortowanie_lt
+[OK]   test_4_round_trip
+[OK]   test_5_duplikaty_i_typ
+[OK]   test_6_niezmienne_id_i_slots
+
+Wynik: 6/6 testów zaliczonych.
+```
+* **W programie:** film dodany jako nieobejrzany ma ocenę `-`, a po opcji „Oznacz jako obejrzany i oceń” na watchliście dostaje ocenę, która zapisuje się też w bazie (offline tylko na watchliście, z komunikatem):
+```text
+Film Incepcja oznaczono jako obejrzany z oceną 9.2.
+Ocena zapisana też w bazie.
+1    Incepcja Sci-Fi  Netflix   2010-07-16 148 min   9.2  HIT
+```
+* **Przeniesienie starej watchlisty:** `Przeniesiono watchlistę z watchlist.csv do watchlist.json.`
+
+## 5. Podział pracy (Zadanie 3)
+* **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3 – 5 commitów.
+* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny – 3 commity.
