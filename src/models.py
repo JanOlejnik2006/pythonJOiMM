@@ -98,3 +98,64 @@ class MediaTitle:
         """Oznacza film jako obejrzany i od razu go ocenia."""
         self.is_watched = True
         self.rating = rating
+
+    #jo
+    def __repr__(self) -> str:
+        return (
+            f"MediaTitle(title_id={self.title_id}, title={self.title!r}, genre={self.genre!r}, "
+            f"platform={self.platform!r}, duration_min={self.duration_min}, "
+            f"release_date={self.release_date!r}, is_watched={self.is_watched}, rating={self.rating})"
+        )
+
+    #jo
+    def __str__(self) -> str:
+        year = self.year if self.year is not None else "-"
+        rating = f"{self.rating:.1f}" if self.rating is not None else "-"
+        return f"[{self.title_id:02d}] {self.title} ({year}) | {self.genre} | {self.duration_min} min | ocena: {rating}"
+
+    #jo
+    def __eq__(self, other: object) -> bool:
+        """Dwa filmy są tym samym filmem, jeśli mają to samo ID."""
+        if not isinstance(other, MediaTitle):
+            return False
+        return self.title_id == other.title_id
+
+    #jo
+    def __lt__(self, other: "MediaTitle") -> bool:
+        """Naturalny porządek: najpierw ocenione, od najwyższej oceny, potem po tytule."""
+        if not isinstance(other, MediaTitle):
+            return NotImplemented
+        return self._sort_key() < other._sort_key()
+
+    #jo
+    def _sort_key(self) -> tuple:
+        rating = self.rating if self.rating is not None else 0.0
+        return (self.rating is None, -rating, self.title.lower())
+
+    #jo
+    def to_dict(self) -> dict:
+        return {
+            "id": self.title_id,
+            "title": self.title,
+            "genre": self.genre,
+            "platform": self.platform,
+            "duration": self.duration_min,
+            "release_date": self.release_date,
+            "is_watched": self.is_watched,
+            "rating": self.rating,
+        }
+
+    #jo
+    @classmethod
+    def from_dict(cls, data: dict) -> "MediaTitle":
+        is_watched = bool(data.get("is_watched", False))
+        return cls(
+            title_id=int(data["id"]),
+            title=str(data["title"]),
+            genre=str(data.get("genre", "brak")),
+            platform=str(data.get("platform", "brak")),
+            duration_min=int(data.get("duration", 0)),
+            release_date=str(data.get("release_date", "-")),
+            is_watched=is_watched,
+            rating=data.get("rating") if is_watched else None,
+        )
