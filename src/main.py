@@ -1,7 +1,7 @@
 #jo (edit:mm)
 from pymongo.errors import PyMongoError
 from data import STATUS, VIEW
-from db import DEFAULT_FIELDS, load_movies, save_movie
+from db import load_movies, normalize_movies, save_movie
 from network import is_online
 from services import (
     add_item, add_to_watchlist, apply_view, display_items, find_by_id, get_field_values,
@@ -11,7 +11,7 @@ from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
     load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
 )
-from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string
+from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string, get_yes_no
 
 #mm
 WATCHLIST = load_watchlist()
@@ -50,7 +50,7 @@ def get_movies() -> list:
         except PyMongoError:
             STATUS["online"] = False
             print("Utracono połączenie z bazą, przełączam na tryb offline.")
-    return [{**DEFAULT_FIELDS, **movie} for movie in load_movies_cache()]
+    return normalize_movies(load_movies_cache())
 
 #jo (edit:mm)
 FILTER_FIELDS = {
@@ -116,14 +116,19 @@ def show_movies():
 
 #mm (edit:jo)
 def read_movie_data() -> dict:
-    return {
+    movie_data = {
         "title": get_non_empty_string("Tytuł: "),
         "genre": get_non_empty_string("Gatunek: "),
         "platform": get_non_empty_string("Platforma VOD: "),
-        "rating": get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10),
         "duration": get_int_input("Czas trwania [min]: ", 1, 600),
         "release_date": get_date_input("Data premiery [RRRR-MM-DD]: "),
+        "is_watched": get_yes_no("Czy film jest już obejrzany? [t/n]: "),
     }
+    if movie_data["is_watched"]:
+        movie_data["rating"] = get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10)
+    else:
+        movie_data["rating"] = None
+    return movie_data
 
 #mm (edit:jo)
 def add_movie():

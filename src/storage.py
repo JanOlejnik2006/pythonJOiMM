@@ -13,7 +13,7 @@ import shutil
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 WATCHLIST_FILE = DATA_DIR / "watchlist.csv"
 REQUIRED_FIELDS = ["id", "title", "genre", "platform", "rating", "duration"]
-FIELDS = REQUIRED_FIELDS + ["release_date"]
+FIELDS = REQUIRED_FIELDS + ["release_date", "is_watched"]
 
 #jo
 BACKUP_DIR = DATA_DIR / "backups"
@@ -81,7 +81,8 @@ def read_watchlist_file(path: Path) -> list:
             "title": row["title"],
             "genre": row["genre"],
             "platform": row["platform"],
-            "rating": float(row["rating"]),
+            "rating": float(row["rating"]) if row["rating"] else None,
+            "is_watched": row.get("is_watched") == "True",
             "duration": hours_to_minutes(row["duration"]),
             "release_date": row.get("release_date") or "-",
         })
