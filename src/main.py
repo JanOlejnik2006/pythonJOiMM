@@ -4,9 +4,10 @@ from data import STATUS, VIEW
 from db import load_movies, normalize_movies, save_movie
 from network import is_online
 from services import (
-    add_item, add_to_watchlist, apply_view, display_items, find_by_id, get_field_values,
-    average_rating, next_id, remove_from_watchlist, search_items, suggest_title, total_duration,
+    add_item, apply_view, display_items, find_by_id, get_field_values,
+    next_id, search_items, suggest_title,
 )
+from models import MediaTitle, Watchlist
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
     load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
@@ -15,6 +16,10 @@ from validators import get_date_input, get_float_input, get_int_input, get_non_e
 
 #mm
 WATCHLIST = load_watchlist()
+
+#mm
+def watchlist_dicts() -> list:
+    return [movie.to_dict() for movie in WATCHLIST.items]
 
 #jo
 def sync_pending_movies() -> int:
@@ -226,11 +231,12 @@ def print_watchlist_menu():
 
 #mm
 def show_watchlist():
-    visible = apply_view(WATCHLIST, VIEW)
+    visible = apply_view(watchlist_dicts(), VIEW)
     display_items(visible)
-    minutes = total_duration(visible)
-    print(f"Łączny czas seansu: {minutes // 60} h {minutes % 60} min")
-    print(f"Średnia ocena: {average_rating(visible):.1f}")
+    shown = Watchlist(items=[MediaTitle.from_dict(movie) for movie in visible])
+    minutes = shown.total_minutes()
+    print(f"Łączny czas seansu: {minutes // 60} h {minutes % 60} min ({shown.total_runtime_hours()} h)")
+    print(f"Średnia ocena obejrzanych: {shown.average_rating():.1f}")
 
 #mm
 def choose_movie(items_list: list) -> dict | None:
@@ -253,7 +259,7 @@ def watchlist_add():
     movie = choose_movie(movies)
     if movie is None:
         return
-    if add_to_watchlist(WATCHLIST, movies, movie["id"]):
+    if WATCHLIST.add(MediaTitle.from_dict(movie)):
         save_watchlist(WATCHLIST)
         print(f"Dodano film {movie['title']} do watchlisty.")
     else:
@@ -261,10 +267,10 @@ def watchlist_add():
 
 #mm
 def watchlist_remove():
-    movie = choose_movie(WATCHLIST)
+    movie = choose_movie(watchlist_dicts())
     if movie is None:
         return
-    remove_from_watchlist(WATCHLIST, movie["id"])
+    WATCHLIST.remove(movie["id"])
     save_watchlist(WATCHLIST)
     print(f"Usunięto film {movie['title']} z watchlisty.")
 
@@ -281,9 +287,9 @@ def watchlist_menu():
             case "3":
                 watchlist_remove()
             case "4":
-                filter_movies(WATCHLIST)
+                filter_movies(watchlist_dicts())
             case "5":
-                sort_movies(WATCHLIST)
+                sort_movies(watchlist_dicts())
             case "6":
                 running = False
             case _:

@@ -140,30 +140,3 @@ def find_by_id(items_list: list, item_id: int) -> dict | None:
         if item["id"] == item_id:
             return item
     return None
-
-#jo
-def add_to_watchlist(watchlist: list, items_list: list, item_id: int) -> bool:
-    item = find_by_id(items_list, item_id)
-    if item is None or find_by_id(watchlist, item_id) is not None:
-        return False
-    watchlist.append(dict(item))
-    return True
-
-#jo
-def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
-    item = find_by_id(watchlist, item_id)
-    if item is None:
-        return False
-    watchlist.remove(item)
-    return True
-
-#jo
-def total_duration(items_list: list) -> int:
-    return sum(item["duration"] for item in items_list)
-
-#mm (edit:jo)
-def average_rating(items_list: list) -> float:
-    ratings = [item["rating"] for item in items_list if item["rating"] is not None]
-    if not ratings:
-        return 0.0
-    return sum(ratings) / len(ratings)
