@@ -1,7 +1,7 @@
 #jo (edit:mm)
 from pymongo.errors import PyMongoError
 from data import STATUS, VIEW
-from db import load_movies, normalize_movies, save_movie
+from db import load_movies, normalize_movies, save_movie, update_movie
 from network import is_online
 from services import (
     add_item, apply_view, display_items, find_by_id, get_field_values,
@@ -225,9 +225,10 @@ def print_watchlist_menu():
     print("1. Wyświetl watchlistę")
     print("2. Dodaj film do watchlisty")
     print("3. Usuń film z watchlisty")
-    print("4. Filtruj")
-    print("5. Sortuj")
-    print("6. Powrót do menu")
+    print("4. Oznacz jako obejrzany i oceń")
+    print("5. Filtruj")
+    print("6. Sortuj")
+    print("7. Powrót do menu")
 
 #mm
 def show_watchlist():
@@ -275,11 +276,30 @@ def watchlist_remove():
     print(f"Usunięto film {movie['title']} z watchlisty.")
 
 #mm
+def watchlist_rate():
+    movie = choose_movie(watchlist_dicts())
+    if movie is None:
+        return
+    rating = get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10)
+    rated = WATCHLIST.mark_watched(movie["id"], rating)
+    save_watchlist(WATCHLIST)
+    print(f"Film {rated.title} oznaczono jako obejrzany z oceną {rated.rating}.")
+    if not STATUS["online"]:
+        print("Brak internetu – ocena zapisana tylko na watchliście, w bazie jej jeszcze nie ma.")
+        return
+    try:
+        update_movie(rated.to_dict())
+        print("Ocena zapisana też w bazie.")
+    except PyMongoError:
+        STATUS["online"] = False
+        print("Utracono połączenie z bazą – ocena zapisana tylko na watchliście.")
+
+#mm
 def watchlist_menu():
     running = True
     while running:
         print_watchlist_menu()
-        match input("Wybierz opcję [1-6]: ").strip():
+        match input("Wybierz opcję [1-7]: ").strip():
             case "1":
                 show_watchlist()
             case "2":
@@ -287,13 +307,15 @@ def watchlist_menu():
             case "3":
                 watchlist_remove()
             case "4":
-                filter_movies(watchlist_dicts())
+                watchlist_rate()
             case "5":
-                sort_movies(watchlist_dicts())
+                filter_movies(watchlist_dicts())
             case "6":
+                sort_movies(watchlist_dicts())
+            case "7":
                 running = False
             case _:
-                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 6.")
+                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
 
 #mm
 def handle_menu_choice(choice: str) -> bool:

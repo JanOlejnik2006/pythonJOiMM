@@ -198,6 +198,14 @@ class Watchlist:
                 return movie
         return None
 
+    def mark_watched(self, title_id: int, rating: float) -> MediaTitle | None:
+        """Oznacza film z listy jako obejrzany i ocenia go przez metodę agregatu."""
+        movie = self.find(title_id)
+        if movie is None:
+            return None
+        movie.mark_watched(rating)
+        return movie
+
     def total_minutes(self) -> int:
         return sum(movie.duration_min for movie in self._items)
 
