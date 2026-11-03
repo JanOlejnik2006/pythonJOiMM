@@ -64,3 +64,13 @@ def get_date_input(prompt: str) -> str:
             print("Błąd: Podaj datę w formacie RRRR-MM-DD, np. 2010-07-16")
             continue
         return raw
+
+#jo
+def get_yes_no(prompt: str) -> bool:
+    while True:
+        raw = input(prompt).strip().lower()
+        if raw in ("t", "tak"):
+            return True
+        if raw in ("n", "nie"):
+            return False
+        print("Błąd: Wpisz t (tak) albo n (nie).")

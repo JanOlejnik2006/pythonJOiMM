@@ -27,14 +27,20 @@ def format_header(widths: dict) -> str:
 #jo
 HIT_THRESHOLD = 9
 
+#jo
+def format_rating(rating: float | None) -> str:
+    if rating is None:
+        return "-"
+    return f"{rating:.1f}"
+
 #mm (edit:jo)
 def format_row(item: dict, widths: dict) -> str:
     row = (
         f"{item['id']:<4} {item['title']:<{widths['title']}} {item['genre']:<{widths['genre']}} "
         f"{item['platform']:<{widths['platform']}} {item['release_date']:<10} "
-        f"{item['duration']:>3} min {item['rating']:>5.1f}"
+        f"{item['duration']:>3} min {format_rating(item['rating']):>5}"
     )
-    if item["rating"] >= HIT_THRESHOLD:
+    if item["rating"] is not None and item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
     return row
 
@@ -89,10 +95,16 @@ def suggest_title(items_list: list, query: str) -> str | None:
     return titles[matches[0]]
 
 #jo
+def sort_value(value):
+    if value is None:
+        return -1
+    return value.lower() if isinstance(value, str) else value
+
+#jo
 def sort_by_field(items_list: list, field: str, descending: bool = False) -> list:
     return sorted(
         items_list,
-        key=lambda item: item[field].lower() if isinstance(item[field], str) else item[field],
+        key=lambda item: sort_value(item[field]),
         reverse=descending,
     )
 
@@ -149,8 +161,9 @@ def remove_from_watchlist(watchlist: list, item_id: int) -> bool:
 def total_duration(items_list: list) -> int:
     return sum(item["duration"] for item in items_list)
 
-#mm
+#mm (edit:jo)
 def average_rating(items_list: list) -> float:
-    if not items_list:
+    ratings = [item["rating"] for item in items_list if item["rating"] is not None]
+    if not ratings:
         return 0.0
-    return sum(item["rating"] for item in items_list) / len(items_list)
+    return sum(ratings) / len(ratings)
