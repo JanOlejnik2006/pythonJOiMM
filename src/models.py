@@ -159,3 +159,81 @@ class MediaTitle:
             is_watched=is_watched,
             rating=data.get("rating") if is_watched else None,
         )
+
+#mm
+class Watchlist:
+    """Agregat: lista filmów do obejrzenia, która pilnuje własnej spójności."""
+
+    __slots__ = ("name", "_items")
+
+    def __init__(self, name: str = "Do obejrzenia", items: list[MediaTitle] | None = None) -> None:
+        self.name: str = name
+        self._items: list[MediaTitle] = []
+        for item in items if items is not None else []:
+            self.add(item)
+
+    @property
+    def items(self) -> list[MediaTitle]:
+        """Zwraca kopię listy, żeby nie dało się jej zmienić z pominięciem metod."""
+        return list(self._items)
+
+    def add(self, movie: MediaTitle) -> bool:
+        if not isinstance(movie, MediaTitle):
+            raise TypeError("Na watchliście mogą być tylko obiekty MediaTitle.")
+        if movie in self._items:
+            return False
+        self._items.append(movie)
+        return True
+
+    def remove(self, title_id: int) -> bool:
+        movie = self.find(title_id)
+        if movie is None:
+            return False
+        self._items.remove(movie)
+        return True
+
+    def find(self, title_id: int) -> MediaTitle | None:
+        for movie in self._items:
+            if movie.title_id == title_id:
+                return movie
+        return None
+
+    def total_minutes(self) -> int:
+        return sum(movie.duration_min for movie in self._items)
+
+    def total_runtime_hours(self) -> float:
+        return round(self.total_minutes() / 60, 2)
+
+    def average_rating(self) -> float:
+        ratings = [movie.rating for movie in self._items if movie.rating is not None]
+        if not ratings:
+            return 0.0
+        return round(sum(ratings) / len(ratings), 1)
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Watchlist):
+            return False
+        return self.name == other.name and self._items == other._items
+
+    def __repr__(self) -> str:
+        return f"Watchlist(name={self.name!r}, items={self._items!r})"
+
+    def __str__(self) -> str:
+        lines = [f"=== {self.name.upper()} ({len(self)} filmów) ==="]
+        lines.extend(f"  * {movie}" for movie in self._items)
+        lines.append(f"  ŁĄCZNIE: {self.total_runtime_hours()} h")
+        return "\n".join(lines)
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "items": [movie.to_dict() for movie in self._items],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Watchlist":
+        movies = [MediaTitle.from_dict(raw) for raw in data.get("items", [])]
+        return cls(str(data.get("name", "Do obejrzenia")), movies)
