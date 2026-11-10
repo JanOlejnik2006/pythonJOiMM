@@ -196,6 +196,10 @@ class Movie(MediaTitle):
             f"rating={self.rating}, director={self.director!r})"
         )
 
+    def __str__(self) -> str:
+        """Opis z klasy bazowej (super) + to, co ma tylko film: reżyser."""
+        return f"{super().__str__()} | reż. {self.director}"
+
     def to_dict(self) -> dict:
         data = super().to_dict()
         data["duration"] = self.duration_min
@@ -286,6 +290,13 @@ class Series(MediaTitle):
             f"platform={self.platform!r}, seasons={self.seasons}, "
             f"episodes_per_season={self.episodes_per_season}, minutes_per_episode={self.minutes_per_episode}, "
             f"release_date={self.release_date!r}, is_watched={self.is_watched}, rating={self.rating})"
+        )
+
+    def __str__(self) -> str:
+        """Opis z klasy bazowej (super) + to, co ma tylko serial: sezony, odcinki i dni do końca."""
+        return (
+            f"{super().__str__()} | {self.seasons} sez. x {self.episodes_per_season} odc. | "
+            f"{self.days_to_finish()} dni po 60 min"
         )
 
     def to_dict(self) -> dict:

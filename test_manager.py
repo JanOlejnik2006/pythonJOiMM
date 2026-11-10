@@ -90,6 +90,18 @@ def test_6_menedzer_pilnuje_kolekcji():
     assert empty.next_id() == 1
 
 #mm
+def test_7_repr_i_str_w_podklasach():
+    movie = Movie(1, "Incepcja", "Sci-Fi", "Netflix", 148, "2010-07-16", True, 9.0, "Christopher Nolan")
+    series = Series(2, "Breaking Bad", "Dramat", "Netflix", 5, 12, 47, "2008-01-20", True, 9.5)
+    for media in (movie, series):
+        assert repr(eval(repr(media))) == repr(media)
+    assert repr(movie).startswith("Movie(")
+    assert repr(series).startswith("Series(")
+    assert str(movie).endswith("| reż. Christopher Nolan")
+    assert "5 sez. x 12 odc." in str(series)
+    assert str(series).endswith("47 dni po 60 min")
+
+#mm
 TESTS = [
     test_1_klasa_bazowa_jest_abstrakcyjna,
     test_2_polimorfizm_czasu_i_wagi,
@@ -97,6 +109,7 @@ TESTS = [
     test_4_dyskryminator_typu_round_trip,
     test_5_stare_i_bledne_dane,
     test_6_menedzer_pilnuje_kolekcji,
+    test_7_repr_i_str_w_podklasach,
 ]
 
 #mm

@@ -15,6 +15,9 @@ Testy: `python test_models.py` i `python test_manager.py`
 - czas w raporcie platform w godzinach i minutach zamiast ułamków godzin
 - metoda days_to_finish() tylko dla seriali: ile dni do końca przy godzinie dziennie, widoczna w tabeli obok „HIT”
 - autotest test_7_dni_do_konca_serialu
+- podgląd pozycji w „Wyświetl kolekcję”: opis (__str__) i podgląd techniczny (__repr__)
+- własny __str__ w Movie i Series przez super() (reżyser dla filmu, sezony, odcinki i dni do końca dla serialu)
+- autotest test_7_repr_i_str_w_podklasach
 
 ### 3.0.1 (2026-11-10)
 - klasa bazowa MediaTitle (ABC) i podklasy Movie oraz Series (dziedziczenie i polimorfizm)

@@ -130,6 +130,19 @@ def show_movies():
         f"Pozycji: {len(catalog)} ({kinds}) | Łączny czas: {catalog.total_runtime_hours()} h | "
         f"Waga odtwarzania: {catalog.total_playback_weight()} h"
     )
+    show_details(catalog)
+
+#mm
+def show_details(catalog: MediaCatalogManager):
+    title_id = get_int_input("Podaj ID pozycji do podglądu (0 = pomiń): ", 0, catalog.next_id() - 1)
+    if title_id == 0:
+        return
+    media = catalog.find(title_id)
+    if media is None:
+        print("Błąd: Nie ma pozycji o takim ID.")
+        return
+    print(media)
+    print(f"Podgląd techniczny (repr): {media!r}")
 
 #jo
 MEDIA_FORMS = {
