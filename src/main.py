@@ -7,7 +7,7 @@ from services import (
     add_item, apply_view, display_items, find_by_id, get_field_values,
     next_id, search_items, suggest_title,
 )
-from models import MediaTitle, Watchlist
+from models import Movie, Watchlist
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
     load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
@@ -234,7 +234,7 @@ def print_watchlist_menu():
 def show_watchlist():
     visible = apply_view(watchlist_dicts(), VIEW)
     display_items(visible)
-    shown = Watchlist(items=[MediaTitle.from_dict(movie) for movie in visible])
+    shown = Watchlist(items=[Movie.from_dict(movie) for movie in visible])
     minutes = shown.total_minutes()
     print(f"Łączny czas seansu: {minutes // 60} h {minutes % 60} min ({shown.total_runtime_hours()} h)")
     print(f"Średnia ocena obejrzanych: {shown.average_rating():.1f}")
@@ -260,7 +260,7 @@ def watchlist_add():
     movie = choose_movie(movies)
     if movie is None:
         return
-    if WATCHLIST.add(MediaTitle.from_dict(movie)):
+    if WATCHLIST.add(Movie.from_dict(movie)):
         save_watchlist(WATCHLIST)
         print(f"Dodano film {movie['title']} do watchlisty.")
     else:

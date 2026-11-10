@@ -1,12 +1,12 @@
-#jo
-from src.models import MediaTitle, Watchlist
+#jo (edit:mm)
+from src.models import MediaTitle, Movie, Watchlist
 
 #jo
 def make_movies() -> list:
     return [
-        MediaTitle(1, "Incepcja", "Sci-Fi", "Netflix", 148, "2010-07-16", True, 9.0),
-        MediaTitle(2, "Gladiator", "Historyczny", "Max", 155, "2000-05-05", True, 8.0),
-        MediaTitle(3, "Shrek", "Animacja", "Netflix", 90, "2001-05-18"),
+        Movie(1, "Incepcja", "Sci-Fi", "Netflix", 148, "2010-07-16", True, 9.0),
+        Movie(2, "Gladiator", "Historyczny", "Max", 155, "2000-05-05", True, 8.0),
+        Movie(3, "Shrek", "Animacja", "Netflix", 90, "2001-05-18"),
     ]
 
 #jo
@@ -36,12 +36,12 @@ def test_2_odrzucenie_blednych_danych():
         except ValueError:
             pass
     try:
-        MediaTitle(4, "Zły czas", "Dramat", "Max", -10)
+        Movie(4, "Zły czas", "Dramat", "Max", -10)
         assert False, "Ujemny czas trwania powinien rzucić ValueError"
     except ValueError:
         pass
     try:
-        MediaTitle(5, "Zła data", "Dramat", "Max", 100, "16.07.2010")
+        Movie(5, "Zła data", "Dramat", "Max", 100, "16.07.2010")
         assert False, "Zły format daty powinien rzucić ValueError"
     except ValueError:
         pass
@@ -68,7 +68,7 @@ def test_5_duplikaty_i_typ():
     incepcja = make_movies()[0]
     watchlist = Watchlist()
     assert watchlist.add(incepcja) is True
-    assert watchlist.add(MediaTitle(1, "Ten sam film", "Sci-Fi", "Netflix", 148)) is False
+    assert watchlist.add(Movie(1, "Ten sam film", "Sci-Fi", "Netflix", 148)) is False
     assert len(watchlist) == 1
     try:
         watchlist.add({"id": 2, "title": "Słownik"})
