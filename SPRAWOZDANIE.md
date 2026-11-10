@@ -292,7 +292,7 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, ponowne łączenie online w menu, drobne poprawki – 16 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak, priorytet wyników zaczynających się od szukanej frazy, data aktualizacji lokalnego zapisu w menu, usunięcie zbędnych źródeł, kolejkowanie dodawania filmów offline, poprawka zajętych ID przy wysyłaniu kolejki – 17 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 44 commity, Mateusz Mazur 43 commity (razem z Zadaniem 3).
+* **Łącznie w repozytorium:** Jan Olejnik 49 commitów, Mateusz Mazur 45 commitów (razem z Zadaniem 3).
 
 ---
 ---
@@ -348,6 +348,14 @@ Wynik: 7/7 testów zaliczonych.
 ```text
 2    Serial Breaking Bad Dramat  Netflix   2008-01-20 2820 min   9.5  HIT  47 dni po 60 min
 3    Serial Czarnobyl    Dramat  Max       -          325 min     -  6 dni po 60 min
+```
+* **Ile dni do końca – w watchliście:** nowa opcja „7. Ile dni do końca serialu” pokazuje tylko seriale z watchlisty. Wybierasz serial, podajesz, ile minut dziennie oglądasz, a program liczy dni i zaokrągla w górę (resztę odcinka też trzeba obejrzeć):
+```text
+1. test (750 min)
+0. Anuluj
+Wybierz film [0-1]: 1
+Ile minut dziennie oglądasz? [1-1440]: 100
+Serial test: 8 dni przy 100 min dziennie (zaokrąglone w górę).
 ```
 * **W programie:** film dodany jako nieobejrzany ma ocenę `-`, a po opcji „Oznacz jako obejrzany i oceń” na watchliście dostaje ocenę, która zapisuje się też w bazie (offline tylko na watchliście, z komunikatem):
 ```text
@@ -423,4 +431,4 @@ Razem: 3 pozycji, 52 h 03 min
 
 ## 5. Podział pracy (Zadanie 3)
 * **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu, wywołanie `__repr__` w podglądzie pozycji i `__str__` nadpisany w każdej podklasie – 12 commitów.
-* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README, czas w raporcie platform w godzinach i minutach, metoda „dni do końca” tylko dla seriali – 9 commitów.
+* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README, czas w raporcie platform w godzinach i minutach, metoda „dni do końca” tylko dla seriali, opcja „Ile dni do końca serialu” w watchliście – 10 commitów.

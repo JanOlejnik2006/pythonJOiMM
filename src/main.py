@@ -8,7 +8,7 @@ from services import (
     next_id, search_items, suggest_title,
 )
 from manager import MediaCatalogManager
-from models import Watchlist, media_from_dict
+from models import Series, Watchlist, media_from_dict
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
     load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
@@ -288,7 +288,8 @@ def print_watchlist_menu():
     print("4. Oznacz jako obejrzany i oceń")
     print("5. Filtruj")
     print("6. Sortuj")
-    print("7. Powrót do menu")
+    print("7. Ile dni do końca serialu")
+    print("8. Powrót do menu")
 
 #mm
 def show_watchlist():
@@ -354,12 +355,25 @@ def watchlist_rate():
         STATUS["online"] = False
         print("Utracono połączenie z bazą – ocena zapisana tylko na watchliście.")
 
-#mm
+#jo
+def watchlist_days():
+    series_list = [item for item in watchlist_dicts() if item.get("type") == Series.TYPE_TAG]
+    if not series_list:
+        print("Brak seriali na watchliście.")
+        return
+    series = choose_movie(series_list)
+    if series is None:
+        return
+    minutes_per_day = get_int_input("Ile minut dziennie oglądasz? [1-1440]: ", 1, 1440)
+    days = Series.from_dict(series).days_to_finish(minutes_per_day)
+    print(f"Serial {series['title']}: {days} dni przy {minutes_per_day} min dziennie (zaokrąglone w górę).")
+
+#mm (edit:jo)
 def watchlist_menu():
     running = True
     while running:
         print_watchlist_menu()
-        match input("Wybierz opcję [1-7]: ").strip():
+        match input("Wybierz opcję [1-8]: ").strip():
             case "1":
                 show_watchlist()
             case "2":
@@ -373,9 +387,11 @@ def watchlist_menu():
             case "6":
                 sort_movies(watchlist_dicts())
             case "7":
+                watchlist_days()
+            case "8":
                 running = False
             case _:
-                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
+                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
 
 #jo
 def format_runtime(minutes: int) -> str:
