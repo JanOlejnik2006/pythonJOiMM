@@ -364,7 +364,11 @@ def watchlist_menu():
             case _:
                 print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
 
-#mm
+#jo
+def format_runtime(minutes: int) -> str:
+    return f"{minutes // 60} h {minutes % 60:02d} min"
+
+#mm (edit:jo)
 def show_platform_report():
     catalog = get_catalog()
     report = catalog.platform_report()
@@ -372,13 +376,13 @@ def show_platform_report():
         print("Brak pozycji do raportu.")
         return
     width = max(len("Platforma"), max(len(row["platforma"]) for row in report))
-    header = f"{'Platforma':<{width}} {'Pozycji':>7} {'Śr. ocena':>9} {'Czas [h]':>9}"
+    header = f"{'Platforma':<{width}} {'Pozycji':>7} {'Śr. ocena':>9} {'Czas':>13}"
     print(header)
     print("-" * len(header))
     for row in report:
         rating = f"{row['srednia_ocena']:.2f}" if row["srednia_ocena"] is not None else "-"
-        print(f"{row['platforma']:<{width}} {row['pozycji']:>7} {rating:>9} {row['laczny_czas_h']:>9.2f}")
-    print(f"Razem: {len(catalog)} pozycji, {catalog.total_runtime_hours()} h")
+        print(f"{row['platforma']:<{width}} {row['pozycji']:>7} {rating:>9} {format_runtime(row['laczny_czas_min']):>13}")
+    print(f"Razem: {len(catalog)} pozycji, {format_runtime(catalog.total_runtime_minutes())}")
 
 #mm
 def handle_menu_choice(choice: str) -> bool:
