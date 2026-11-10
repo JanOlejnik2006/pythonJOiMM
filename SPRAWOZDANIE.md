@@ -340,8 +340,14 @@ To niezmiennik z zadania: oceny 1.0–10.0 nie da się przypisać filmowi, któr
 [OK]   test_4_round_trip
 [OK]   test_5_duplikaty_i_typ
 [OK]   test_6_niezmienne_id_i_slots
+[OK]   test_7_dni_do_konca_serialu
 
-Wynik: 6/6 testów zaliczonych.
+Wynik: 7/7 testów zaliczonych.
+```
+* **Dni do końca serialu:** metoda `days_to_finish()` jest tylko w klasie `Series` (film nie ma sezonów i odcinków). Liczy, ile dni zajmie obejrzenie całego serialu przy godzinie dziennie, i zaokrągla w górę. W tabeli pokazuje się na końcu wiersza serialu, podobnie jak „HIT”:
+```text
+2    Serial Breaking Bad Dramat  Netflix   2008-01-20 2820 min   9.5  HIT  47 dni po 60 min
+3    Serial Czarnobyl    Dramat  Max       -          325 min     -  6 dni po 60 min
 ```
 * **W programie:** film dodany jako nieobejrzany ma ocenę `-`, a po opcji „Oznacz jako obejrzany i oceń” na watchliście dostaje ocenę, która zapisuje się też w bazie (offline tylko na watchliście, z komunikatem):
 ```text
@@ -409,4 +415,4 @@ Razem: 3 pozycji, 52.05 h
 
 ## 5. Podział pracy (Zadanie 3)
 * **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu – 10 commitów.
-* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README – 6 commitów.
+* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README, czas w raporcie platform w godzinach i minutach, metoda „dni do końca” tylko dla seriali – 9 commitów.
