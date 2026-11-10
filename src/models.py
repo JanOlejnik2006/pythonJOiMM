@@ -1,4 +1,5 @@
-#mm
+#mm (edit:jo)
+import math
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -273,6 +274,11 @@ class Series(MediaTitle):
 
     def kind_label(self) -> str:
         return "Serial"
+
+    def days_to_finish(self, minutes_per_day: int = 60) -> int:
+        """Tylko serial: ile dni zajmie obejrzenie całości przy danej liczbie minut dziennie (zaokrąglamy w górę)."""
+        minutes_per_day = self._positive_int(minutes_per_day, "Liczba minut dziennie")
+        return math.ceil(self.runtime_minutes() / minutes_per_day)
 
     def __repr__(self) -> str:
         return (

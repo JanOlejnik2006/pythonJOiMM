@@ -11,6 +11,11 @@ Testy: `python test_models.py` i `python test_manager.py`
 
 ## Historia wersji
 
+### 3.0.2 (2026-11-10)
+- czas w raporcie platform w godzinach i minutach zamiast ułamków godzin
+- metoda days_to_finish() tylko dla seriali: ile dni do końca przy godzinie dziennie, widoczna w tabeli obok „HIT”
+- autotest test_7_dni_do_konca_serialu
+
 ### 3.0.1 (2026-11-10)
 - klasa bazowa MediaTitle (ABC) i podklasy Movie oraz Series (dziedziczenie i polimorfizm)
 - dodawanie filmu albo serialu (reżyser dla filmu, sezony i odcinki dla serialu)
