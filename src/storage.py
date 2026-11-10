@@ -8,7 +8,7 @@ from pathlib import Path
 
 #mm
 import shutil
-from models import MediaTitle, Watchlist
+from models import Movie, Watchlist
 
 #jo
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -123,7 +123,7 @@ def repair_watchlist() -> Watchlist:
 #mm
 def migrate_old_watchlist() -> Watchlist:
     try:
-        movies = [MediaTitle.from_dict(row) for row in read_old_watchlist_csv(OLD_WATCHLIST_FILE)]
+        movies = [Movie.from_dict(row) for row in read_old_watchlist_csv(OLD_WATCHLIST_FILE)]
     except READ_ERRORS:
         print(f"[OSTRZEŻENIE] Nie udało się wczytać starego pliku {OLD_WATCHLIST_FILE.name}.")
         movies = []

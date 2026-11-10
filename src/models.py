@@ -1,11 +1,12 @@
 #mm
+from abc import ABC, abstractmethod
 from datetime import datetime
 
 #mm
-class MediaTitle:
-    """Pojedynczy film w kolekcji CineStream."""
+class MediaTitle(ABC):
+    """Klasa bazowa: wspólne pola i kontrakt dla filmu i serialu."""
 
-    __slots__ = ("_title_id", "title", "genre", "platform", "_duration_min", "_release_date", "_is_watched", "_rating")
+    __slots__ = ("_title_id", "title", "genre", "platform", "_release_date", "_is_watched", "_rating")
 
     def __init__(
         self,
@@ -13,7 +14,6 @@ class MediaTitle:
         title: str,
         genre: str,
         platform: str,
-        duration_min: int,
         release_date: str = "-",
         is_watched: bool = False,
         rating: float | None = None,
@@ -22,7 +22,6 @@ class MediaTitle:
         self.title: str = title
         self.genre: str = genre
         self.platform: str = platform
-        self.duration_min = duration_min
         self.release_date = release_date
         self._is_watched: bool = False
         self._rating: float | None = None
@@ -33,16 +32,6 @@ class MediaTitle:
     def title_id(self) -> int:
         """ID jest tylko do odczytu – nie ma settera."""
         return self._title_id
-
-    @property
-    def duration_min(self) -> int:
-        return self._duration_min
-
-    @duration_min.setter
-    def duration_min(self, value: int) -> None:
-        if not isinstance(value, int) or value < 0:
-            raise ValueError(f"Czas trwania musi być liczbą minut >= 0 (podano: {value}).")
-        self._duration_min = value
 
     @property
     def release_date(self) -> str:
@@ -82,7 +71,7 @@ class MediaTitle:
 
     @rating.setter
     def rating(self, value: float | None) -> None:
-        """Niezmiennik: ocenę można dać tylko obejrzanemu filmowi."""
+        """Niezmiennik: ocenę można dać tylko obejrzanej pozycji."""
         if value is None:
             self._rating = None
             return
@@ -95,27 +84,34 @@ class MediaTitle:
         self._rating = round(float(value), 1)
 
     def mark_watched(self, rating: float) -> None:
-        """Oznacza film jako obejrzany i od razu go ocenia."""
+        """Oznacza pozycję jako obejrzaną i od razu ją ocenia."""
         self.is_watched = True
         self.rating = rating
 
-    #jo
-    def __repr__(self) -> str:
-        return (
-            f"MediaTitle(title_id={self.title_id}, title={self.title!r}, genre={self.genre!r}, "
-            f"platform={self.platform!r}, duration_min={self.duration_min}, "
-            f"release_date={self.release_date!r}, is_watched={self.is_watched}, rating={self.rating})"
-        )
+    @abstractmethod
+    def runtime_minutes(self) -> int:
+        """Łączny czas oglądania w minutach – każda podklasa liczy go po swojemu."""
+
+    @abstractmethod
+    def calculate_playback_weight(self) -> float:
+        """Waga odtwarzania w godzinach – każda podklasa liczy ją po swojemu."""
+
+    @abstractmethod
+    def kind_label(self) -> str:
+        """Nazwa rodzaju pozycji wyświetlana w menu."""
 
     #jo
     def __str__(self) -> str:
         year = self.year if self.year is not None else "-"
         rating = f"{self.rating:.1f}" if self.rating is not None else "-"
-        return f"[{self.title_id:02d}] {self.title} ({year}) | {self.genre} | {self.duration_min} min | ocena: {rating}"
+        return (
+            f"[{self.title_id:02d}] {self.kind_label()}: {self.title} ({year}) | {self.genre} | "
+            f"{self.runtime_minutes()} min | ocena: {rating}"
+        )
 
     #jo
     def __eq__(self, other: object) -> bool:
-        """Dwa filmy są tym samym filmem, jeśli mają to samo ID."""
+        """Dwie pozycje są tą samą pozycją, jeśli mają to samo ID."""
         if not isinstance(other, MediaTitle):
             return False
         return self.title_id == other.title_id
@@ -132,22 +128,78 @@ class MediaTitle:
         rating = self.rating if self.rating is not None else 0.0
         return (self.rating is None, -rating, self.title.lower())
 
-    #jo
+    #jo (edit:mm)
     def to_dict(self) -> dict:
+        """Wspólna część słownika – podklasy dopisują swoje pola."""
         return {
             "id": self.title_id,
             "title": self.title,
             "genre": self.genre,
             "platform": self.platform,
-            "duration": self.duration_min,
             "release_date": self.release_date,
             "is_watched": self.is_watched,
             "rating": self.rating,
         }
 
-    #jo
+
+#mm
+class Movie(MediaTitle):
+    """Film: ma jeden czas trwania i reżysera."""
+
+    __slots__ = ("_duration_min", "director")
+
+    def __init__(
+        self,
+        title_id: int,
+        title: str,
+        genre: str,
+        platform: str,
+        duration_min: int,
+        release_date: str = "-",
+        is_watched: bool = False,
+        rating: float | None = None,
+        director: str = "nieznany",
+    ) -> None:
+        super().__init__(title_id, title, genre, platform, release_date, is_watched, rating)
+        self.duration_min = duration_min
+        self.director: str = director
+
+    @property
+    def duration_min(self) -> int:
+        return self._duration_min
+
+    @duration_min.setter
+    def duration_min(self, value: int) -> None:
+        if not isinstance(value, int) or value < 0:
+            raise ValueError(f"Czas trwania musi być liczbą minut >= 0 (podano: {value}).")
+        self._duration_min = value
+
+    def runtime_minutes(self) -> int:
+        return self.duration_min
+
+    def calculate_playback_weight(self) -> float:
+        """Film ogląda się na jeden raz, więc waga to po prostu czas w godzinach."""
+        return round(self.duration_min / 60, 2)
+
+    def kind_label(self) -> str:
+        return "Film"
+
+    def __repr__(self) -> str:
+        return (
+            f"Movie(title_id={self.title_id}, title={self.title!r}, genre={self.genre!r}, "
+            f"platform={self.platform!r}, duration_min={self.duration_min}, "
+            f"release_date={self.release_date!r}, is_watched={self.is_watched}, "
+            f"rating={self.rating}, director={self.director!r})"
+        )
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data["duration"] = self.duration_min
+        data["director"] = self.director
+        return data
+
     @classmethod
-    def from_dict(cls, data: dict) -> "MediaTitle":
+    def from_dict(cls, data: dict) -> "Movie":
         is_watched = bool(data.get("is_watched", False))
         return cls(
             title_id=int(data["id"]),
@@ -158,11 +210,13 @@ class MediaTitle:
             release_date=str(data.get("release_date", "-")),
             is_watched=is_watched,
             rating=data.get("rating") if is_watched else None,
+            director=str(data.get("director", "nieznany")),
         )
+
 
 #mm
 class Watchlist:
-    """Agregat: lista filmów do obejrzenia, która pilnuje własnej spójności."""
+    """Agregat: lista filmów i seriali do obejrzenia, która pilnuje własnej spójności."""
 
     __slots__ = ("name", "_items")
 
@@ -179,7 +233,7 @@ class Watchlist:
 
     def add(self, movie: MediaTitle) -> bool:
         if not isinstance(movie, MediaTitle):
-            raise TypeError("Na watchliście mogą być tylko obiekty MediaTitle.")
+            raise TypeError("Na watchliście mogą być tylko obiekty klas pochodnych MediaTitle.")
         if movie in self._items:
             return False
         self._items.append(movie)
@@ -207,7 +261,7 @@ class Watchlist:
         return movie
 
     def total_minutes(self) -> int:
-        return sum(movie.duration_min for movie in self._items)
+        return sum(movie.runtime_minutes() for movie in self._items)
 
     def total_runtime_hours(self) -> float:
         return round(self.total_minutes() / 60, 2)
@@ -243,5 +297,5 @@ class Watchlist:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Watchlist":
-        movies = [MediaTitle.from_dict(raw) for raw in data.get("items", [])]
+        movies = [Movie.from_dict(raw) for raw in data.get("items", [])]
         return cls(str(data.get("name", "Do obejrzenia")), movies)
