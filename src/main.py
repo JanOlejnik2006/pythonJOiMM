@@ -116,8 +116,9 @@ def print_menu():
     print("4. Sortuj")
     print("5. Filtruj")
     print("6. Dodaj film lub serial")
-    print("7. Połącz z bazą (online)")
-    print("8. Wyjście z programu")
+    print("7. Raport platform")
+    print("8. Połącz z bazą (online)")
+    print("9. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -364,6 +365,22 @@ def watchlist_menu():
                 print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 7.")
 
 #mm
+def show_platform_report():
+    catalog = get_catalog()
+    report = catalog.platform_report()
+    if not report:
+        print("Brak pozycji do raportu.")
+        return
+    width = max(len("Platforma"), max(len(row["platforma"]) for row in report))
+    header = f"{'Platforma':<{width}} {'Pozycji':>7} {'Śr. ocena':>9} {'Czas [h]':>9}"
+    print(header)
+    print("-" * len(header))
+    for row in report:
+        rating = f"{row['srednia_ocena']:.2f}" if row["srednia_ocena"] is not None else "-"
+        print(f"{row['platforma']:<{width}} {row['pozycji']:>7} {rating:>9} {row['laczny_czas_h']:>9.2f}")
+    print(f"Razem: {len(catalog)} pozycji, {catalog.total_runtime_hours()} h")
+
+#mm
 def handle_menu_choice(choice: str) -> bool:
     match choice.strip():
         case "1":
@@ -379,12 +396,14 @@ def handle_menu_choice(choice: str) -> bool:
         case "6":
             add_movie()
         case "7":
+            show_platform_report()
+        case "8":
             reconnect()
-        case "8" | "q" | "exit":
+        case "9" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 9.")
     return True
 
 #mm (edit:jo)
@@ -417,7 +436,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-8]: ")
+        user_choice = input("Wybierz opcję [1-9]: ")
         try:
             running = handle_menu_choice(user_choice)
         except PyMongoError:
