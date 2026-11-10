@@ -401,8 +401,16 @@ Dzięki rejestrowi dodanie nowego rodzaju pozycji to dopisanie jednej klasy i je
 [OK]   test_4_dyskryminator_typu_round_trip
 [OK]   test_5_stare_i_bledne_dane
 [OK]   test_6_menedzer_pilnuje_kolekcji
+[OK]   test_7_repr_i_str_w_podklasach
 
-Wynik: 6/6 testów zaliczonych.
+Wynik: 7/7 testów zaliczonych.
+```
+
+**`__repr__` i `__str__` w podklasach:** każda podklasa ma własny `__repr__`, który zwraca „przepis” na odtworzenie obiektu – test sprawdza, że `eval(repr(obj))` daje taki sam obiekt. `__str__` w `Movie` i `Series` bierze opis z klasy bazowej przez `super().__str__()` i dopisuje swoje: film reżysera, serial sezony, odcinki i dni do końca. W opcji „Wyświetl kolekcję” po tabeli można podać ID i zobaczyć oba opisy:
+```text
+Podaj ID pozycji do podglądu (0 = pomiń): 1
+[01] Film: Incepcja (2010) | Sci-Fi | 148 min | ocena: 9.0 | reż. Christopher Nolan
+Podgląd techniczny (repr): Movie(title_id=1, title='Incepcja', genre='Sci-Fi', platform='Netflix', duration_min=148, release_date='2010-07-16', is_watched=True, rating=9.0, director='Christopher Nolan')
 ```
 
 **Raport platform w programie:**
@@ -414,5 +422,5 @@ Razem: 3 pozycji, 52 h 03 min
 ```
 
 ## 5. Podział pracy (Zadanie 3)
-* **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu – 10 commitów.
+* **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu, wywołanie `__repr__` w podglądzie pozycji i `__str__` nadpisany w każdej podklasie – 12 commitów.
 * **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README, czas w raporcie platform w godzinach i minutach, metoda „dni do końca” tylko dla seriali – 9 commitów.
