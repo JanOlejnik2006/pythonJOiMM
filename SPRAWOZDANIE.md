@@ -401,10 +401,10 @@ Wynik: 6/6 testów zaliczonych.
 
 **Raport platform w programie:**
 ```text
-Platforma          Pozycji Śr. ocena  Czas [h]
-Amazon Prime Video       1         -      2.58
-Netflix                  2      9.25     49.47
-Razem: 3 pozycji, 52.05 h
+Platforma          Pozycji Śr. ocena          Czas
+Amazon Prime Video       1         -    2 h 35 min
+Netflix                  2      9.25   49 h 28 min
+Razem: 3 pozycji, 52 h 03 min
 ```
 
 ## 5. Podział pracy (Zadanie 3)

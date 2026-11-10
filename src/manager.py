@@ -68,6 +68,6 @@ class MediaCatalogManager:
                 "platforma": platform,
                 "pozycji": len(on_platform),
                 "srednia_ocena": round(sum(ratings) / len(ratings), 2) if ratings else None,
-                "laczny_czas_h": round(sum(media.runtime_minutes() for media in on_platform) / 60, 2),
+                "laczny_czas_min": sum(media.runtime_minutes() for media in on_platform),
             })
         return report
