@@ -292,7 +292,7 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, ponowne łączenie online w menu, drobne poprawki – 16 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak, priorytet wyników zaczynających się od szukanej frazy, data aktualizacji lokalnego zapisu w menu, usunięcie zbędnych źródeł, kolejkowanie dodawania filmów offline, poprawka zajętych ID przy wysyłaniu kolejki – 17 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 41 commitów, Mateusz Mazur 38 commitów (razem z Zadaniem 3).
+* **Łącznie w repozytorium:** Jan Olejnik 44 commity, Mateusz Mazur 43 commity (razem z Zadaniem 3).
 
 ---
 ---
@@ -351,6 +351,62 @@ Ocena zapisana też w bazie.
 ```
 * **Przeniesienie starej watchlisty:** `Przeniesiono watchlistę z watchlist.csv do watchlist.json.`
 
+## 4b. Dziedziczenie, polimorfizm i menedżer (Laboratorium 3.2)
+
+**Hierarchia klas:**
+```text
+                  MediaTitle (ABC)
+   wspólne: title_id, title, genre, platform, release_date,
+            is_watched, rating, year, mark_watched()
+   abstrakcyjne: runtime_minutes(), calculate_playback_weight(), kind_label()
+                         │
+          ┌──────────────┴──────────────┐
+        Movie                         Series
+  duration_min, director      seasons, episodes_per_season,
+  type = "movie"              minutes_per_episode, type = "series"
+
+  Watchlist ──(1:N)──▶ MediaTitle      MediaCatalogManager ──(1:N)──▶ MediaTitle
+```
+
+**Co doszło:**
+* `MediaTitle` jest teraz **klasą abstrakcyjną** (`ABC`). Nie da się utworzyć jej obiektu (`TypeError`), tylko obiekt podklasy. Podklasy wywołują `super().__init__()` dla wspólnych pól.
+* **Polimorfizm:** `Movie` i `Series` mają własne `runtime_minutes()`, `calculate_playback_weight()` i `kind_label()`. Film liczy czas z jednego seansu, a serial z sezonów, odcinków i długości odcinka (waga dolicza 5 minut czołówki na każdy odcinek). Reszta programu wywołuje te metody bez sprawdzania, czy to film, czy serial.
+* **Menedżer `MediaCatalogManager`** (`src/manager.py`): dodaje pozycje (pilnuje typu i duplikatów ID), liczy łączny czas seansu, wagę odtwarzania, liczbę filmów i seriali oraz robi raport platform. Menu wyświetla kolekcję, dodaje pozycje i pokazuje raport przez menedżera.
+* **Dyskryminator typu:** `to_dict()` dopisuje pole `"type"` (`"movie"` albo `"series"`), a fabryka `media_from_dict()` wybiera klasę ze słownika `MEDIA_REGISTRY`. Stare wpisy bez typu są wczytywane jako filmy.
+* W menu: „6. Dodaj film lub serial” (dla filmu pyta o reżysera, dla serialu o sezony i odcinki), „7. Raport platform” i kolumna „Typ” w tabeli.
+
+**Kluczowy fragment – fabryka typów:**
+```python
+def media_from_dict(data: dict) -> MediaTitle:
+    """Fabryka: wybiera klasę po polu "type" bez drabinki if/elif. Stare wpisy bez typu to filmy."""
+    type_tag = data.get("type", "movie")
+    target_cls = MEDIA_REGISTRY.get(type_tag)
+    if target_cls is None:
+        raise ValueError(f"Nieznany typ pozycji w danych: {type_tag!r}")
+    return target_cls.from_dict(data)
+```
+Dzięki rejestrowi dodanie nowego rodzaju pozycji to dopisanie jednej klasy i jednej linijki w `MEDIA_REGISTRY`, bez zmieniania kodu, który wczytuje dane.
+
+**Autotesty menedżera** (`python test_manager.py`):
+```text
+[OK]   test_1_klasa_bazowa_jest_abstrakcyjna
+[OK]   test_2_polimorfizm_czasu_i_wagi
+[OK]   test_3_menedzer_sumy_i_raport
+[OK]   test_4_dyskryminator_typu_round_trip
+[OK]   test_5_stare_i_bledne_dane
+[OK]   test_6_menedzer_pilnuje_kolekcji
+
+Wynik: 6/6 testów zaliczonych.
+```
+
+**Raport platform w programie:**
+```text
+Platforma          Pozycji Śr. ocena  Czas [h]
+Amazon Prime Video       1         -      2.58
+Netflix                  2      9.25     49.47
+Razem: 3 pozycji, 52.05 h
+```
+
 ## 5. Podział pracy (Zadanie 3)
-* **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3 – 5 commitów.
-* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny – 3 commity.
+* **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu – 10 commitów.
+* **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README – 6 commitów.
