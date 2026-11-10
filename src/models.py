@@ -7,6 +7,7 @@ class MediaTitle(ABC):
     """Klasa bazowa: wspólne pola i kontrakt dla filmu i serialu."""
 
     __slots__ = ("_title_id", "title", "genre", "platform", "_release_date", "_is_watched", "_rating")
+    TYPE_TAG: str = ""
 
     def __init__(
         self,
@@ -130,8 +131,9 @@ class MediaTitle(ABC):
 
     #jo (edit:mm)
     def to_dict(self) -> dict:
-        """Wspólna część słownika – podklasy dopisują swoje pola."""
+        """Wspólna część słownika – podklasy dopisują swoje pola, a "type" mówi, jaka to klasa."""
         return {
+            "type": self.TYPE_TAG,
             "id": self.title_id,
             "title": self.title,
             "genre": self.genre,
@@ -147,6 +149,7 @@ class Movie(MediaTitle):
     """Film: ma jeden czas trwania i reżysera."""
 
     __slots__ = ("_duration_min", "director")
+    TYPE_TAG = "movie"
 
     def __init__(
         self,
@@ -212,6 +215,112 @@ class Movie(MediaTitle):
             rating=data.get("rating") if is_watched else None,
             director=str(data.get("director", "nieznany")),
         )
+
+
+#jo
+class Series(MediaTitle):
+    """Serial: czas liczony z sezonów, odcinków i długości odcinka."""
+
+    __slots__ = ("_seasons", "_episodes_per_season", "_minutes_per_episode")
+    TYPE_TAG = "series"
+    INTRO_MINUTES = 5
+
+    def __init__(
+        self,
+        title_id: int,
+        title: str,
+        genre: str,
+        platform: str,
+        seasons: int,
+        episodes_per_season: int,
+        minutes_per_episode: int,
+        release_date: str = "-",
+        is_watched: bool = False,
+        rating: float | None = None,
+    ) -> None:
+        super().__init__(title_id, title, genre, platform, release_date, is_watched, rating)
+        self._seasons = self._positive_int(seasons, "Liczba sezonów")
+        self._episodes_per_season = self._positive_int(episodes_per_season, "Liczba odcinków w sezonie")
+        self._minutes_per_episode = self._positive_int(minutes_per_episode, "Długość odcinka")
+
+    @staticmethod
+    def _positive_int(value: int, label: str) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"{label} musi być liczbą całkowitą większą od zera (podano: {value}).")
+        return value
+
+    @property
+    def seasons(self) -> int:
+        return self._seasons
+
+    @property
+    def episodes_per_season(self) -> int:
+        return self._episodes_per_season
+
+    @property
+    def minutes_per_episode(self) -> int:
+        return self._minutes_per_episode
+
+    def episodes_total(self) -> int:
+        return self._seasons * self._episodes_per_season
+
+    def runtime_minutes(self) -> int:
+        return self.episodes_total() * self._minutes_per_episode
+
+    def calculate_playback_weight(self) -> float:
+        """Serial ogląda się w odcinkach, więc doliczamy czołówkę i podsumowanie każdego odcinka."""
+        return round(self.episodes_total() * (self._minutes_per_episode + self.INTRO_MINUTES) / 60, 2)
+
+    def kind_label(self) -> str:
+        return "Serial"
+
+    def __repr__(self) -> str:
+        return (
+            f"Series(title_id={self.title_id}, title={self.title!r}, genre={self.genre!r}, "
+            f"platform={self.platform!r}, seasons={self.seasons}, "
+            f"episodes_per_season={self.episodes_per_season}, minutes_per_episode={self.minutes_per_episode}, "
+            f"release_date={self.release_date!r}, is_watched={self.is_watched}, rating={self.rating})"
+        )
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data["seasons"] = self.seasons
+        data["episodes_per_season"] = self.episodes_per_season
+        data["minutes_per_episode"] = self.minutes_per_episode
+        data["duration"] = self.runtime_minutes()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Series":
+        is_watched = bool(data.get("is_watched", False))
+        return cls(
+            title_id=int(data["id"]),
+            title=str(data["title"]),
+            genre=str(data.get("genre", "brak")),
+            platform=str(data.get("platform", "brak")),
+            seasons=int(data["seasons"]),
+            episodes_per_season=int(data["episodes_per_season"]),
+            minutes_per_episode=int(data["minutes_per_episode"]),
+            release_date=str(data.get("release_date", "-")),
+            is_watched=is_watched,
+            rating=data.get("rating") if is_watched else None,
+        )
+
+
+#jo
+MEDIA_REGISTRY: dict[str, type[MediaTitle]] = {
+    "movie": Movie,
+    "series": Series,
+}
+
+#jo
+def media_from_dict(data: dict) -> MediaTitle:
+    """Fabryka: wybiera klasę po polu "type" bez drabinki if/elif. Stare wpisy bez typu to filmy."""
+    type_tag = data.get("type", "movie")
+    target_cls = MEDIA_REGISTRY.get(type_tag)
+    if target_cls is None:
+        raise ValueError(f"Nieznany typ pozycji w danych: {type_tag!r}")
+    return target_cls.from_dict(data)
 
 
 #mm
@@ -297,5 +406,5 @@ class Watchlist:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Watchlist":
-        movies = [Movie.from_dict(raw) for raw in data.get("items", [])]
+        movies = [media_from_dict(raw) for raw in data.get("items", [])]
         return cls(str(data.get("name", "Do obejrzenia")), movies)
