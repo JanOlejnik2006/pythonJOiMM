@@ -4,9 +4,10 @@ from data import STATUS, VIEW
 from db import load_movies, normalize_movies, save_movie, update_movie
 from network import is_online
 from services import (
-    add_item, apply_view, display_items, find_by_id, get_field_values,
+    apply_view, display_items, find_by_id, get_field_values,
     next_id, search_items, suggest_title,
 )
+from manager import MediaCatalogManager
 from models import Watchlist, media_from_dict
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
@@ -56,6 +57,10 @@ def get_movies() -> list:
             STATUS["online"] = False
             print("Utracono połączenie z bazą, przełączam na tryb offline.")
     return normalize_movies(load_movies_cache())
+
+#jo
+def get_catalog() -> MediaCatalogManager:
+    return MediaCatalogManager.from_dicts(get_movies())
 
 #jo (edit:mm)
 FILTER_FIELDS = {
@@ -110,41 +115,82 @@ def print_menu():
     print("3. Wyświetl kolekcję")
     print("4. Sortuj")
     print("5. Filtruj")
-    print("6. Dodaj film")
+    print("6. Dodaj film lub serial")
     print("7. Połącz z bazą (online)")
     print("8. Wyjście z programu")
     print("-" * 40)
 
 #mm (edit:jo)
 def show_movies():
-    display_items(apply_view(get_movies(), VIEW))
+    catalog = get_catalog()
+    display_items(apply_view(catalog.as_dicts(), VIEW))
+    kinds = ", ".join(f"{label}: {count}" for label, count in catalog.count_by_kind().items())
+    print(
+        f"Pozycji: {len(catalog)} ({kinds}) | Łączny czas: {catalog.total_runtime_hours()} h | "
+        f"Waga odtwarzania: {catalog.total_playback_weight()} h"
+    )
+
+#jo
+MEDIA_FORMS = {
+    1: ("movie", "Film"),
+    2: ("series", "Serial"),
+}
+
+#jo
+def read_movie_fields() -> dict:
+    return {
+        "duration": get_int_input("Czas trwania [min]: ", 1, 600),
+        "director": get_non_empty_string("Reżyser: "),
+    }
+
+#jo
+def read_series_fields() -> dict:
+    return {
+        "seasons": get_int_input("Liczba sezonów: ", 1, 100),
+        "episodes_per_season": get_int_input("Odcinków w sezonie: ", 1, 500),
+        "minutes_per_episode": get_int_input("Minut na odcinek: ", 1, 300),
+    }
+
+#jo
+FIELD_READERS = {
+    "movie": read_movie_fields,
+    "series": read_series_fields,
+}
 
 #mm (edit:jo)
-def read_movie_data() -> dict:
-    movie_data = {
+def read_media_data() -> dict:
+    print("Co dodajesz?")
+    for number, (_, label) in MEDIA_FORMS.items():
+        print(f"{number}. {label}")
+    choice = get_int_input(f"Wybierz [1-{len(MEDIA_FORMS)}]: ", 1, len(MEDIA_FORMS))
+    type_tag = MEDIA_FORMS[choice][0]
+    media_data = {
+        "type": type_tag,
         "title": get_non_empty_string("Tytuł: "),
         "genre": get_non_empty_string("Gatunek: "),
         "platform": get_non_empty_string("Platforma VOD: "),
-        "duration": get_int_input("Czas trwania [min]: ", 1, 600),
-        "release_date": get_date_input("Data premiery [RRRR-MM-DD]: "),
-        "is_watched": get_yes_no("Czy film jest już obejrzany? [t/n]: "),
     }
-    if movie_data["is_watched"]:
-        movie_data["rating"] = get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10)
+    media_data.update(FIELD_READERS[type_tag]())
+    media_data["release_date"] = get_date_input("Data premiery [RRRR-MM-DD]: ")
+    media_data["is_watched"] = get_yes_no("Czy jest już obejrzany? [t/n]: ")
+    if media_data["is_watched"]:
+        media_data["rating"] = get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10)
     else:
-        movie_data["rating"] = None
-    return movie_data
+        media_data["rating"] = None
+    return media_data
 
 #mm (edit:jo)
 def add_movie():
-    movie_data = read_movie_data()
-    movies = get_movies()
-    added = add_item(movies, movie_data)
-    save_movies_cache(movies)
+    media_data = read_media_data()
+    catalog = get_catalog()
+    media = media_from_dict({"id": catalog.next_id(), **media_data})
+    catalog.add(media)
+    added = media.to_dict()
+    save_movies_cache(catalog.as_dicts())
     if STATUS["online"]:
         try:
             save_movie(added)
-            print(f"Dodano film o ID {added['id']}.")
+            print(f"Dodano: {media.kind_label()} {media.title} (ID {media.title_id}).")
             return
         except PyMongoError:
             STATUS["online"] = False
@@ -152,11 +198,11 @@ def add_movie():
     pending = load_pending_movies()
     pending.append(added)
     save_pending_movies(pending)
-    print(f"Zapisano lokalnie film o ID {added['id']}. Zostanie wysłany na serwer po połączeniu z internetem.")
+    print(f"Zapisano lokalnie: {media.kind_label()} {media.title} (ID {media.title_id}). Zostanie wysłany na serwer po połączeniu z internetem.")
 #mm (edit:jo)
 def search_movies():
     query = get_non_empty_string("Szukaj (tytuł, gatunek lub platforma): ")
-    movies = apply_view(get_movies(), VIEW)
+    movies = apply_view(get_catalog().as_dicts(), VIEW)
     results = search_items(movies, query)
     if not results:
         print(f"Brak filmów dla frazy '{query}'.")
@@ -256,7 +302,7 @@ def choose_movie(items_list: list) -> dict | None:
 
 #mm (edit:jo)
 def watchlist_add():
-    movies = get_movies()
+    movies = get_catalog().as_dicts()
     movie = choose_movie(movies)
     if movie is None:
         return
@@ -327,9 +373,9 @@ def handle_menu_choice(choice: str) -> bool:
         case "3":
             show_movies()
         case "4":
-            sort_movies(get_movies())
+            sort_movies(get_catalog().as_dicts())
         case "5":
-            filter_movies(get_movies())
+            filter_movies(get_catalog().as_dicts())
         case "6":
             add_movie()
         case "7":

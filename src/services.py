@@ -16,10 +16,16 @@ def column_widths(items_list: list) -> dict:
             widths[field] = max(widths[field], len(item[field]))
     return widths
 
-#mm
+#jo
+TYPE_LABELS = {
+    "movie": "Film",
+    "series": "Serial",
+}
+
+#mm (edit:jo)
 def format_header(widths: dict) -> str:
     header = (
-        f"{'ID':<4} {'Tytuł':<{widths['title']}} {'Gatunek':<{widths['genre']}} "
+        f"{'ID':<4} {'Typ':<6} {'Tytuł':<{widths['title']}} {'Gatunek':<{widths['genre']}} "
         f"{'Platforma':<{widths['platform']}} {'Premiera':<10} {'Czas':>7} {'Ocena':>5}"
     )
     return header + "\n" + "-" * len(header)
@@ -36,7 +42,8 @@ def format_rating(rating: float | None) -> str:
 #mm (edit:jo)
 def format_row(item: dict, widths: dict) -> str:
     row = (
-        f"{item['id']:<4} {item['title']:<{widths['title']}} {item['genre']:<{widths['genre']}} "
+        f"{item['id']:<4} {TYPE_LABELS.get(item.get('type'), 'Film'):<6} "
+        f"{item['title']:<{widths['title']}} {item['genre']:<{widths['genre']}} "
         f"{item['platform']:<{widths['platform']}} {item['release_date']:<10} "
         f"{item['duration']:>3} min {format_rating(item['rating']):>5}"
     )
