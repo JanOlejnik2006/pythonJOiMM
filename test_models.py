@@ -1,5 +1,5 @@
 #jo (edit:mm)
-from src.models import MediaTitle, Movie, Watchlist
+from src.models import MediaTitle, Movie, Series, Watchlist
 
 #jo
 def make_movies() -> list:
@@ -91,6 +91,19 @@ def test_6_niezmienne_id_i_slots():
         pass
 
 #jo
+def test_7_dni_do_konca_serialu():
+    serial = Series(1, "Breaking Bad", "Dramat", "Netflix", 5, 12, 47)
+    assert serial.days_to_finish() == 47
+    assert serial.days_to_finish(120) == 24
+    assert Series(2, "Krótki", "Dramat", "Max", 1, 1, 30).days_to_finish() == 1
+    assert not hasattr(Movie(3, "Incepcja", "Sci-Fi", "Netflix", 148), "days_to_finish")
+    try:
+        serial.days_to_finish(0)
+        assert False, "Zero minut dziennie powinno rzucić ValueError"
+    except ValueError:
+        pass
+
+#jo
 TESTS = [
     test_1_poprawne_tworzenie,
     test_2_odrzucenie_blednych_danych,
@@ -98,6 +111,7 @@ TESTS = [
     test_4_round_trip,
     test_5_duplikaty_i_typ,
     test_6_niezmienne_id_i_slots,
+    test_7_dni_do_konca_serialu,
 ]
 
 #jo
