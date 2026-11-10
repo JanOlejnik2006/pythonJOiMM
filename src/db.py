@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from models import Movie
+from models import media_from_dict
 
 #jo
 load_dotenv()
@@ -25,7 +25,7 @@ def normalize_movies(raw_movies: list) -> list:
     movies = []
     for raw in raw_movies:
         try:
-            movies.append(Movie.from_dict({**DEFAULT_FIELDS, **raw}).to_dict())
+            movies.append(media_from_dict({**DEFAULT_FIELDS, **raw}).to_dict())
         except (KeyError, ValueError, TypeError):
             print(f"[OSTRZEŻENIE] Pominięto błędny wpis filmu: {raw.get('title', '?')}")
     return movies
