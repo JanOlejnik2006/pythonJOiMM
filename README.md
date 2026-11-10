@@ -6,8 +6,20 @@ Autorzy: Mateusz Mazur, Jan Olejnik
 
 Uruchomienie: `python src/main.py`
 
+Testy: `python test_models.py` i `python test_manager.py`
 
-## Ostatnio dodane:
+
+## Historia wersji
+
+### 3.0.1 (2026-11-10)
+- klasa bazowa MediaTitle (ABC) i podklasy Movie oraz Series (dziedziczenie i polimorfizm)
+- dodawanie filmu albo serialu (reżyser dla filmu, sezony i odcinki dla serialu)
+- menedżer kolekcji MediaCatalogManager (łączny czas seansu, waga odtwarzania, raport platform)
+- raport platform w menu i kolumna „Typ” w tabeli
+- dyskryminator typu ("type") w zapisie JSON i fabryka media_from_dict
+- autotesty menedżera w test_manager.py
+
+### 3.0.0 (2026-11-03)
 - klasy MediaTitle i Watchlist (programowanie obiektowe)
 - watchlista zapisywana w pliku JSON
 - oznaczanie filmu jako obejrzany i ocena tylko dla obejrzanych
