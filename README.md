@@ -11,6 +11,11 @@ Testy: `python test_models.py` i `python test_manager.py`
 
 ## Historia wersji
 
+### 3.0.3 (2026-11-16)
+- dopisek „dni do końca” w tabeli przez polimorfizm (metoda table_note()) zamiast sprawdzania typu
+- liczba minut dziennie dla seriali w jednej stałej Series.MINUTES_PER_DAY
+- poprawki w sprawozdaniu: diagram klas, przykłady i liczby commitów
+
 ### 3.0.2 (2026-11-10)
 - w watchliście opcja „Ile dni do końca serialu”: podajesz minuty dziennie, wynik zaokrąglony w górę
 - czas w raporcie platform w godzinach i minutach zamiast ułamków godzin
