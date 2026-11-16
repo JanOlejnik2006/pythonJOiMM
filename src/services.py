@@ -35,9 +35,6 @@ def format_header(widths: dict) -> str:
 HIT_THRESHOLD = 9
 
 #jo
-MINUTES_PER_DAY = 60
-
-#jo
 def format_rating(rating: float | None) -> str:
     if rating is None:
         return "-"
@@ -54,8 +51,8 @@ def format_row(item: dict, widths: dict) -> str:
     if item["rating"] is not None and item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
     if item.get("type") == Series.TYPE_TAG:
-        days = Series.from_dict(item).days_to_finish(MINUTES_PER_DAY)
-        row += f"  {days} dni po {MINUTES_PER_DAY} min"
+        days = Series.from_dict(item).days_to_finish()
+        row += f"  {days} dni po {Series.MINUTES_PER_DAY} min"
     return row
 
 #mm
