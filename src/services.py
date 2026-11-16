@@ -1,6 +1,6 @@
 #mm (edit:jo)
 import difflib
-from models import Series
+from models import media_from_dict
 
 #jo
 POLISH_LETTERS = str.maketrans("ąćęłńóśźż", "acelnoszz")
@@ -50,9 +50,7 @@ def format_row(item: dict, widths: dict) -> str:
     )
     if item["rating"] is not None and item["rating"] >= HIT_THRESHOLD:
         row += "  HIT"
-    if item.get("type") == Series.TYPE_TAG:
-        days = Series.from_dict(item).days_to_finish()
-        row += f"  {days} dni po {Series.MINUTES_PER_DAY} min"
+    row += media_from_dict(item).table_note()
     return row
 
 #mm

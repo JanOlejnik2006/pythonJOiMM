@@ -103,6 +103,11 @@ class MediaTitle(ABC):
         """Nazwa rodzaju pozycji wyświetlana w menu."""
 
     #jo
+    def table_note(self) -> str:
+        """Dopisek na końcu wiersza tabeli. Domyślnie pusty, podklasa może go nadpisać."""
+        return ""
+
+    #jo
     def __str__(self) -> str:
         year = self.year if self.year is not None else "-"
         rating = f"{self.rating:.1f}" if self.rating is not None else "-"
@@ -284,6 +289,10 @@ class Series(MediaTitle):
         """Tylko serial: ile dni zajmie obejrzenie całości przy danej liczbie minut dziennie (zaokrąglamy w górę)."""
         minutes_per_day = self._positive_int(minutes_per_day, "Liczba minut dziennie")
         return math.ceil(self.runtime_minutes() / minutes_per_day)
+
+    def table_note(self) -> str:
+        """W tabeli serial pokazuje, ile dni zostało do końca."""
+        return f"  {self.days_to_finish()} dni po {self.MINUTES_PER_DAY} min"
 
     def __repr__(self) -> str:
         return (
