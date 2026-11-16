@@ -97,6 +97,8 @@ def test_7_dni_do_konca_serialu():
     assert serial.days_to_finish(120) == 24
     assert Series(2, "Krótki", "Dramat", "Max", 1, 1, 30).days_to_finish() == 1
     assert not hasattr(Movie(3, "Incepcja", "Sci-Fi", "Netflix", 148), "days_to_finish")
+    assert serial.table_note() == "  47 dni po 60 min"
+    assert Movie(3, "Incepcja", "Sci-Fi", "Netflix", 148).table_note() == ""
     try:
         serial.days_to_finish(0)
         assert False, "Zero minut dziennie powinno rzucić ValueError"

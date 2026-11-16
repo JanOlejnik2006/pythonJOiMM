@@ -103,6 +103,11 @@ class MediaTitle(ABC):
         """Nazwa rodzaju pozycji wyświetlana w menu."""
 
     #jo
+    def table_note(self) -> str:
+        """Dopisek na końcu wiersza tabeli. Domyślnie pusty, podklasa może go nadpisać."""
+        return ""
+
+    #jo
     def __str__(self) -> str:
         year = self.year if self.year is not None else "-"
         rating = f"{self.rating:.1f}" if self.rating is not None else "-"
@@ -229,6 +234,7 @@ class Series(MediaTitle):
     __slots__ = ("_seasons", "_episodes_per_season", "_minutes_per_episode")
     TYPE_TAG = "series"
     INTRO_MINUTES = 5
+    MINUTES_PER_DAY = 60
 
     def __init__(
         self,
@@ -279,10 +285,14 @@ class Series(MediaTitle):
     def kind_label(self) -> str:
         return "Serial"
 
-    def days_to_finish(self, minutes_per_day: int = 60) -> int:
+    def days_to_finish(self, minutes_per_day: int = MINUTES_PER_DAY) -> int:
         """Tylko serial: ile dni zajmie obejrzenie całości przy danej liczbie minut dziennie (zaokrąglamy w górę)."""
         minutes_per_day = self._positive_int(minutes_per_day, "Liczba minut dziennie")
         return math.ceil(self.runtime_minutes() / minutes_per_day)
+
+    def table_note(self) -> str:
+        """W tabeli serial pokazuje, ile dni zostało do końca."""
+        return f"  {self.days_to_finish()} dni po {self.MINUTES_PER_DAY} min"
 
     def __repr__(self) -> str:
         return (
@@ -296,7 +306,7 @@ class Series(MediaTitle):
         """Opis z klasy bazowej (super) + to, co ma tylko serial: sezony, odcinki i dni do końca."""
         return (
             f"{super().__str__()} | {self.seasons} sez. x {self.episodes_per_season} odc. | "
-            f"{self.days_to_finish()} dni po 60 min"
+            f"{self.days_to_finish()} dni po {self.MINUTES_PER_DAY} min"
         )
 
     def to_dict(self) -> dict:
