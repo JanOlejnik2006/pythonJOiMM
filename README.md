@@ -6,10 +6,17 @@ Autorzy: Mateusz Mazur, Jan Olejnik
 
 Uruchomienie: `python src/main.py`
 
-Testy: `python test_models.py` i `python test_manager.py`
+Testy: `python test_models.py`, `python test_manager.py` i `python test_database.py`
 
 
 ## Historia wersji
+
+### 4.0.0 (2026-11-17)
+- watchlista w relacyjnej bazie SQLite (data/cinestream.db) zamiast pliku JSON
+- dwie tabele: watchlists i media_items, klucz obcy z ON DELETE CASCADE i więzy CHECK
+- repozytorium WatchlistRepository: cały SQL w jednym miejscu, zapis w transakcji
+- jednorazowa migracja starej watchlisty z JSON do bazy (plik dostaje końcówkę .bak)
+- autotesty bazy w test_database.py
 
 ### 3.0.3 (2026-11-16)
 - dopisek „dni do końca” w tabeli przez polimorfizm (metoda table_note()) zamiast sprawdzania typu
