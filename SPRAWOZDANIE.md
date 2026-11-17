@@ -292,7 +292,7 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, ponowne łączenie online w menu, drobne poprawki – 16 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak, priorytet wyników zaczynających się od szukanej frazy, data aktualizacji lokalnego zapisu w menu, usunięcie zbędnych źródeł, kolejkowanie dodawania filmów offline, poprawka zajętych ID przy wysyłaniu kolejki – 17 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 51 commitów, Mateusz Mazur 47 commitów (razem z Zadaniem 3).
+* **Łącznie w repozytorium:** Jan Olejnik 56 commitów, Mateusz Mazur 53 commity (razem z Zadaniem 3 i 4).
 
 ---
 ---
@@ -442,3 +442,88 @@ Razem: 3 pozycji, 52 h 03 min
 ## 5. Podział pracy (Zadanie 3)
 * **Mateusz Mazur:** klasa `MediaTitle` z walidacją i niezmiennikiem oceny, agregat `Watchlist`, zapis watchlisty jako zagnieżdżony JSON i przeniesienie starego CSV, oznaczanie filmu jako obejrzany i ocena w watchliście, sprawozdanie do Zadania 3, klasa bazowa `MediaTitle` (ABC) i podklasa `Movie`, menedżer `MediaCatalogManager`, autotesty `test_manager.py`, raport platform w menu, wywołanie `__repr__` w podglądzie pozycji i `__str__` nadpisany w każdej podklasie, poprawki sprawozdania (diagram klas, przykłady, liczby commitów), historia wersji 3.0.3 w README – 14 commitów.
 * **Jan Olejnik:** `__repr__`, `__str__`, `__eq__`, `__lt__`, `to_dict()` i `from_dict()` w `MediaTitle`, autotesty `test_models.py`, filmy w kolekcji przez `MediaTitle`, pole „obejrzany” przy dodawaniu i obsługa filmów bez oceny, podklasa `Series` i fabryka z dyskryminatorem typu, menu przez menedżera i dodawanie filmu lub serialu, historia wersji w README, aktualizacja „Ostatnio dodane” w README, czas w raporcie platform w godzinach i minutach, metoda „dni do końca” tylko dla seriali, opcja „Ile dni do końca serialu” w watchliście, jedna stała minut dziennie dla seriali, dopisek w tabeli przez polimorfizm (`table_note()`) zamiast sprawdzania typu – 13 commitów.
+
+---
+---
+
+# Zadanie 4 – Relacyjna baza SQLite (Laboratorium 4.1)
+
+## 1. Cel
+Watchlista nie jest już plikiem JSON, tylko leży w relacyjnej bazie SQLite (`data/cinestream.db`). Baza sama pilnuje poprawności danych: ma klucz obcy, więzy `CHECK` i transakcje. Kolekcja filmów zostaje w MongoDB Atlas, a SQLite przechowuje to, co użytkownik trzyma lokalnie, czyli watchlistę. Dzięki temu watchlista działa też bez internetu.
+
+## 2. Zmiany w strukturze plików
+* `src/database.py` – nowy moduł:
+  * `get_connection()` – otwiera bazę, włącza `PRAGMA foreign_keys = ON` (SQLite domyślnie NIE sprawdza kluczy obcych) i ustawia `row_factory = sqlite3.Row`, żeby czytać kolumny po nazwie,
+  * `init_db()` – zakłada tabele przez `CREATE TABLE IF NOT EXISTS`,
+  * `media_to_row()` / `row_to_media()` – zamiana obiektu na wiersz tabeli i z powrotem; odczyt idzie przez fabrykę `media_from_dict()` z Zadania 3, więc wraca prawdziwy `Movie` albo `Series`,
+  * `WatchlistRepository` – cały SQL watchlisty w jednej klasie: zapis watchlisty z pozycjami, odczyt, dodawanie, usuwanie, zapis oceny, usuwanie watchlisty,
+  * `migrate_json_watchlist()` – jednorazowe przeniesienie starej watchlisty z JSON do bazy.
+* `src/main.py` – przy starcie otwiera bazę, robi migrację i wczytuje watchlistę. Opcje watchlisty zapisują zmiany przez repozytorium.
+* `src/storage.py` – usunęliśmy zapis watchlisty do JSON (zapis atomowy, kopie `.bak` i kwarantanna nie są już potrzebne, bo transakcje robi baza). Został tylko odczyt starego pliku na potrzeby migracji.
+* `src/models.py` – czas filmu musi być większy od zera, tak samo jak w `CHECK` w bazie.
+* `test_database.py` – autotesty bazy, uruchamiane przez `python test_database.py`.
+
+## 3. Schemat bazy (relacja 1:N)
+```text
+watchlists                         media_items
+-----------                        -----------
+watchlist_id  PK  ◀──────────┐     item_id        PK
+name          NOT NULL       └──── watchlist_id   FK, ON DELETE CASCADE
+created_at    NOT NULL             media_id       (ID z kolekcji), UNIQUE z watchlist_id
+                                   title, genre, platform   NOT NULL
+                                   release_date, year
+                                   rating         CHECK (rating BETWEEN 1.0 AND 10.0)
+                                   is_watched     CHECK (is_watched IN (0, 1))
+                                   duration_min   CHECK (duration_min > 0)
+                                   type, director, seasons, episodes_per_season, minutes_per_episode
+```
+Jedna watchlista ma wiele pozycji. Kolumny z instrukcji to `title`, `year`, `rating`, `is_watched` i `duration_min`. Resztę dodaliśmy, żeby z wiersza dało się odtworzyć film albo serial (pole `type` to dyskryminator typu z Zadania 3). `UNIQUE (watchlist_id, media_id)` sprawia, że baza sama nie wpuści tego samego filmu drugi raz.
+
+## 4. Kluczowy fragment kodu
+Zapis watchlisty razem z pozycjami w jednej transakcji. `with self._conn:` robi `COMMIT`, jeśli wszystko się udało, albo `ROLLBACK`, jeśli coś poleci (np. `CHECK`), więc nie powstanie watchlista bez pozycji. Wszystkie wartości idą przez znaki zapytania, a nie przez f-stringi:
+```python
+def save_watchlist(self, watchlist: Watchlist) -> int:
+    """Transakcja: watchlista i wszystkie jej pozycje zapisują się razem albo wcale."""
+    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with self._conn:
+        cur = self._conn.execute(
+            "INSERT INTO watchlists (name, created_at) VALUES (?, ?);",
+            (watchlist.name, created_at),
+        )
+        watchlist_id = cur.lastrowid
+        rows = [media_to_row(media, watchlist_id) for media in watchlist.items]
+        self._conn.executemany(INSERT_ITEM, rows)
+    return watchlist_id
+```
+
+**Migracja:** działa tylko wtedy, gdy w bazie nie ma jeszcze żadnej watchlisty (`SELECT COUNT(*)`). Czyta `data/watchlist.json` dotychczasowym `from_dict()`, zapisuje przez repozytorium, a plik zmienia nazwę na `watchlist.json.bak`. Drugie uruchomienie niczego nie dubluje.
+```text
+Przeniesiono watchlistę z pliku JSON do bazy SQLite (7 pozycji).
+```
+
+## 5. Testy
+Testy działają na bazie w pamięci RAM (`:memory:`), więc nie ruszają naszych danych:
+```text
+python test_database.py
+[OK]   test_1_schemat_z_kluczem_obcym
+[OK]   test_2_klucz_obcy_blokuje_sierote
+[OK]   test_3_repozytorium_zapis_i_odczyt
+[OK]   test_4_kaskadowe_usuwanie
+[OK]   test_5_migracja_z_json
+[OK]   test_6_wiezy_check_i_duplikaty
+
+Wynik: 6/6 testów zaliczonych.
+```
+* **test 1:** obie tabele istnieją, klucz obcy wskazuje na `watchlists` i ma `ON DELETE CASCADE`, `PRAGMA foreign_keys` jest włączone.
+* **test 2:** pozycja z nieistniejącym `watchlist_id` rzuca `sqlite3.IntegrityError`.
+* **test 3:** repozytorium zapisuje watchlistę z filmem i serialem i odczytuje ją bez zmian (serial wraca jako `Series`).
+* **test 4:** po usunięciu watchlisty `COUNT(*)` jej pozycji wynosi 0.
+* **test 5:** migracja przenosi pozycję z pliku JSON, robi `.bak`, a drugie uruchomienie nic nie dodaje.
+* **test 6:** `CHECK` odrzuca ocenę 11, `is_watched = 2` i czas 0, a `UNIQUE` blokuje ten sam film drugi raz.
+
+Stare testy dalej przechodzą: `test_models.py` 7/7, `test_manager.py` 7/7.
+
+## 6. Podział pracy (Zadanie 4)
+* **Mateusz Mazur:** repozytorium watchlisty z transakcyjnym zapisem i odczytem, dodawanie, usuwanie i ocena pozycji w repozytorium, autotesty `test_database.py`, test więzów `CHECK` i duplikatów, usunięcie starego zapisu watchlisty do JSON, sprawozdanie do Zadania 4 – 6 commitów.
+* **Jan Olejnik:** połączenie z SQLite i schemat tabel `watchlists` oraz `media_items`, zamiana obiektu na wiersz tabeli i z powrotem (czas filmu większy od zera), migracja watchlisty z JSON do SQLite, watchlista w menu zapisywana w bazie przez repozytorium, historia wersji 4.0.0 w README – 5 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 56 commitów, Mateusz Mazur 53 commity.
