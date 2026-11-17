@@ -81,12 +81,42 @@ def test_5_migracja_z_json():
     assert loaded.items[0].runtime_minutes() == 148
 
 #mm
+def test_6_wiezy_check_i_duplikaty():
+    repo = make_repo()
+    watchlist_id = repo.save_watchlist(Watchlist())
+    bad_rows = [
+        (11.0, 0, 100),  # ocena spoza 1-10
+        (None, 2, 100),  # is_watched tylko 0 albo 1
+        (None, 0, 0),    # czas musi być większy od zera
+    ]
+    for rating, is_watched, duration in bad_rows:
+        try:
+            with repo._conn:
+                repo._conn.execute(
+                    "INSERT INTO media_items (watchlist_id, media_id, title, genre, platform, rating, is_watched, duration_min) "
+                    "VALUES (?, 1, 'Test', 'Dramat', 'Netflix', ?, ?, ?);",
+                    (watchlist_id, rating, is_watched, duration),
+                )
+            assert False, f"CHECK powinien odrzucić wiersz {rating, is_watched, duration}"
+        except sqlite3.IntegrityError:
+            pass
+    movie = Movie(1, "Incepcja", "Sci-Fi", "Netflix", 148)
+    repo.add_item(watchlist_id, movie)
+    try:
+        repo.add_item(watchlist_id, movie)
+        assert False, "UNIQUE powinien zablokować ten sam film drugi raz"
+    except sqlite3.IntegrityError:
+        pass
+    assert repo.count_items(watchlist_id) == 1
+
+#mm
 TESTS = [
     test_1_schemat_z_kluczem_obcym,
     test_2_klucz_obcy_blokuje_sierote,
     test_3_repozytorium_zapis_i_odczyt,
     test_4_kaskadowe_usuwanie,
     test_5_migracja_z_json,
+    test_6_wiezy_check_i_duplikaty,
 ]
 
 #mm
