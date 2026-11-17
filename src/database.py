@@ -3,6 +3,10 @@ import sqlite3
 from pathlib import Path
 from models import MediaTitle, media_from_dict
 
+#mm
+from datetime import datetime
+from models import Watchlist
+
 #jo
 DB_FILE = Path(__file__).resolve().parent.parent / "data" / "cinestream.db"
 
@@ -86,3 +90,49 @@ def row_to_media(row: sqlite3.Row) -> MediaTitle:
     data["duration"] = data["duration_min"]
     data["is_watched"] = bool(data["is_watched"])
     return media_from_dict(data)
+
+#mm
+INSERT_ITEM = """
+INSERT INTO media_items (
+    watchlist_id, media_id, type, title, genre, platform, release_date, year, rating,
+    is_watched, duration_min, director, seasons, episodes_per_season, minutes_per_episode
+) VALUES (
+    :watchlist_id, :media_id, :type, :title, :genre, :platform, :release_date, :year, :rating,
+    :is_watched, :duration_min, :director, :seasons, :episodes_per_season, :minutes_per_episode
+);
+"""
+
+#mm
+class WatchlistRepository:
+    """Repozytorium: cały SQL watchlisty w jednym miejscu, menu i klasy nie piszą zapytań."""
+
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self._conn = conn
+        init_db(conn)
+
+    def count_watchlists(self) -> int:
+        return self._conn.execute("SELECT COUNT(*) FROM watchlists;").fetchone()[0]
+
+    def save_watchlist(self, watchlist: Watchlist) -> int:
+        """Transakcja: watchlista i wszystkie jej pozycje zapisują się razem albo wcale."""
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with self._conn:
+            cur = self._conn.execute(
+                "INSERT INTO watchlists (name, created_at) VALUES (?, ?);",
+                (watchlist.name, created_at),
+            )
+            watchlist_id = cur.lastrowid
+            rows = [media_to_row(media, watchlist_id) for media in watchlist.items]
+            self._conn.executemany(INSERT_ITEM, rows)
+        return watchlist_id
+
+    def load_watchlist(self, watchlist_id: int) -> Watchlist | None:
+        row = self._conn.execute(
+            "SELECT name FROM watchlists WHERE watchlist_id = ?;", (watchlist_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        items = self._conn.execute(
+            "SELECT * FROM media_items WHERE watchlist_id = ? ORDER BY item_id;", (watchlist_id,)
+        ).fetchall()
+        return Watchlist(row["name"], [row_to_media(item) for item in items])
