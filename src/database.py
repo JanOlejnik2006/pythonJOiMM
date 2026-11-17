@@ -3,6 +3,9 @@ import sqlite3
 from pathlib import Path
 from models import MediaTitle, media_from_dict
 
+#jo
+from storage import READ_ERRORS, WATCHLIST_FILE, read_watchlist_file
+
 #mm
 from datetime import datetime
 from models import Watchlist
@@ -167,3 +170,17 @@ class WatchlistRepository:
         return self._conn.execute(
             "SELECT COUNT(*) FROM media_items WHERE watchlist_id = ?;", (watchlist_id,)
         ).fetchone()[0]
+
+#jo
+def migrate_json_watchlist(repo: WatchlistRepository, json_path: Path = WATCHLIST_FILE) -> int:
+    """Jednorazowa migracja: tylko gdy baza jest pusta. Plik JSON zmienia nazwę na .json.bak."""
+    if repo.count_watchlists() > 0 or not json_path.exists():
+        return 0
+    try:
+        watchlist = read_watchlist_file(json_path)
+    except READ_ERRORS:
+        print(f"[OSTRZEŻENIE] Nie udało się wczytać {json_path.name}, migracja pominięta.")
+        return 0
+    repo.save_watchlist(watchlist)
+    json_path.replace(json_path.with_name(json_path.name + ".bak"))
+    return len(watchlist)
