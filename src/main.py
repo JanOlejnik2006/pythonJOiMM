@@ -1,6 +1,7 @@
 #jo (edit:mm)
 from pymongo.errors import PyMongoError
 from data import STATUS, VIEW
+from database import WatchlistRepository, get_connection, migrate_json_watchlist
 from db import load_movies, normalize_movies, save_movie, update_movie
 from network import is_online
 from services import (
@@ -11,12 +12,25 @@ from manager import MediaCatalogManager
 from models import Series, Watchlist, media_from_dict
 from storage import (
     get_cache_update_time, load_movies_cache, load_pending_movies,
-    load_watchlist, save_movies_cache, save_pending_movies, save_watchlist,
+    save_movies_cache, save_pending_movies,
 )
 from validators import get_date_input, get_float_input, get_int_input, get_non_empty_string, get_yes_no
 
-#mm
-WATCHLIST = load_watchlist()
+#jo
+REPO = WatchlistRepository(get_connection())
+
+#jo
+def open_watchlist() -> tuple[int, Watchlist]:
+    migrated = migrate_json_watchlist(REPO)
+    if migrated > 0:
+        print(f"Przeniesiono watchlistę z pliku JSON do bazy SQLite ({migrated} pozycji).")
+    watchlist_id = REPO.first_watchlist_id()
+    if watchlist_id is None:
+        watchlist_id = REPO.save_watchlist(Watchlist())
+    return watchlist_id, REPO.load_watchlist(watchlist_id)
+
+#mm (edit:jo)
+WATCHLIST_ID, WATCHLIST = open_watchlist()
 
 #mm
 def watchlist_dicts() -> list:
@@ -321,29 +335,30 @@ def watchlist_add():
     movie = choose_movie(movies)
     if movie is None:
         return
-    if WATCHLIST.add(media_from_dict(movie)):
-        save_watchlist(WATCHLIST)
+    media = media_from_dict(movie)
+    if WATCHLIST.add(media):
+        REPO.add_item(WATCHLIST_ID, media)
         print(f"Dodano film {movie['title']} do watchlisty.")
     else:
         print(f"Błąd: Film {movie['title']} już jest na watchliście.")
 
-#mm
+#mm (edit:jo)
 def watchlist_remove():
     movie = choose_movie(watchlist_dicts())
     if movie is None:
         return
     WATCHLIST.remove(movie["id"])
-    save_watchlist(WATCHLIST)
+    REPO.remove_item(WATCHLIST_ID, movie["id"])
     print(f"Usunięto film {movie['title']} z watchlisty.")
 
-#mm
+#mm (edit:jo)
 def watchlist_rate():
     movie = choose_movie(watchlist_dicts())
     if movie is None:
         return
     rating = get_float_input("Ocena [1-10, np. 7.5]: ", 1, 10)
     rated = WATCHLIST.mark_watched(movie["id"], rating)
-    save_watchlist(WATCHLIST)
+    REPO.update_rating(WATCHLIST_ID, rated)
     print(f"Film {rated.title} oznaczono jako obejrzany z oceną {rated.rating}.")
     if not STATUS["online"]:
         print("Brak internetu – ocena zapisana tylko na watchliście, w bazie jej jeszcze nie ma.")
