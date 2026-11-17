@@ -1,6 +1,7 @@
 #jo
 import sqlite3
 from pathlib import Path
+from models import MediaTitle, media_from_dict
 
 #jo
 DB_FILE = Path(__file__).resolve().parent.parent / "data" / "cinestream.db"
@@ -54,3 +55,34 @@ def init_db(conn: sqlite3.Connection) -> None:
     with conn:
         conn.execute(DDL_WATCHLISTS)
         conn.execute(DDL_MEDIA_ITEMS)
+
+#jo
+def media_to_row(media: MediaTitle, watchlist_id: int) -> dict:
+    """Obiekt -> wiersz tabeli media_items (bool na 0/1, czas zawsze w minutach)."""
+    data = media.to_dict()
+    return {
+        "watchlist_id": watchlist_id,
+        "media_id": data["id"],
+        "type": data["type"],
+        "title": data["title"],
+        "genre": data["genre"],
+        "platform": data["platform"],
+        "release_date": data["release_date"],
+        "year": media.year,
+        "rating": data["rating"],
+        "is_watched": int(data["is_watched"]),
+        "duration_min": media.runtime_minutes(),
+        "director": data.get("director"),
+        "seasons": data.get("seasons"),
+        "episodes_per_season": data.get("episodes_per_season"),
+        "minutes_per_episode": data.get("minutes_per_episode"),
+    }
+
+#jo
+def row_to_media(row: sqlite3.Row) -> MediaTitle:
+    """Wiersz tabeli -> obiekt przez fabrykę z Zadania 3 (puste kolumny pomijamy)."""
+    data = {key: value for key, value in dict(row).items() if value is not None}
+    data["id"] = data["media_id"]
+    data["duration"] = data["duration_min"]
+    data["is_watched"] = bool(data["is_watched"])
+    return media_from_dict(data)
