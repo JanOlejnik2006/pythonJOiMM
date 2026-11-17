@@ -150,7 +150,7 @@ class MediaTitle(ABC):
         }
 
 
-#mm
+#mm (edit:jo)
 class Movie(MediaTitle):
     """Film: ma jeden czas trwania i reżysera."""
 
@@ -179,8 +179,8 @@ class Movie(MediaTitle):
 
     @duration_min.setter
     def duration_min(self, value: int) -> None:
-        if not isinstance(value, int) or value < 0:
-            raise ValueError(f"Czas trwania musi być liczbą minut >= 0 (podano: {value}).")
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"Czas trwania musi być liczbą minut większą od zera (podano: {value}).")
         self._duration_min = value
 
     def runtime_minutes(self) -> int:
