@@ -136,3 +136,34 @@ class WatchlistRepository:
             "SELECT * FROM media_items WHERE watchlist_id = ? ORDER BY item_id;", (watchlist_id,)
         ).fetchall()
         return Watchlist(row["name"], [row_to_media(item) for item in items])
+
+    def first_watchlist_id(self) -> int | None:
+        row = self._conn.execute("SELECT watchlist_id FROM watchlists ORDER BY watchlist_id LIMIT 1;").fetchone()
+        return row["watchlist_id"] if row is not None else None
+
+    def add_item(self, watchlist_id: int, media: MediaTitle) -> None:
+        with self._conn:
+            self._conn.execute(INSERT_ITEM, media_to_row(media, watchlist_id))
+
+    def remove_item(self, watchlist_id: int, media_id: int) -> None:
+        with self._conn:
+            self._conn.execute(
+                "DELETE FROM media_items WHERE watchlist_id = ? AND media_id = ?;", (watchlist_id, media_id)
+            )
+
+    def update_rating(self, watchlist_id: int, media: MediaTitle) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE media_items SET is_watched = ?, rating = ? WHERE watchlist_id = ? AND media_id = ?;",
+                (int(media.is_watched), media.rating, watchlist_id, media.title_id),
+            )
+
+    def delete_watchlist(self, watchlist_id: int) -> None:
+        """Usuwa watchlistę, a pozycje znikają same dzięki ON DELETE CASCADE."""
+        with self._conn:
+            self._conn.execute("DELETE FROM watchlists WHERE watchlist_id = ?;", (watchlist_id,))
+
+    def count_items(self, watchlist_id: int) -> int:
+        return self._conn.execute(
+            "SELECT COUNT(*) FROM media_items WHERE watchlist_id = ?;", (watchlist_id,)
+        ).fetchone()[0]
