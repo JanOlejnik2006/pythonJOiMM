@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS media_items (
 """
 
 #jo
+ALLOWED_SORT_COLUMNS = {"title", "rating", "duration_min", "year"}
+
+#jo
 def get_connection(db_path: str | Path = DB_FILE) -> sqlite3.Connection:
     """Fabryka połączeń: włącza klucze obce i wyniki jako sqlite3.Row (dostęp po nazwie kolumny)."""
     if db_path != ":memory:":
@@ -139,6 +142,32 @@ class WatchlistRepository:
             "SELECT * FROM media_items WHERE watchlist_id = ? ORDER BY item_id;", (watchlist_id,)
         ).fetchall()
         return Watchlist(row["name"], [row_to_media(item) for item in items])
+
+    #jo
+    def search_items(
+        self,
+        phrase: str = "",
+        min_rating: float | None = None,
+        is_watched: bool | None = None,
+        sort_by: str = "title",
+    ) -> list[MediaTitle]:
+        """Filtr: fragment tytułu (LIKE), minimalna ocena i status. Kolumna sortowania tylko z białej listy."""
+        if sort_by not in ALLOWED_SORT_COLUMNS:
+            raise ValueError(f"Niedozwolona kolumna sortowania: {sort_by}")
+        sql = (
+            "SELECT * FROM media_items "
+            "WHERE title LIKE :pattern "
+            "AND (:min_rating IS NULL OR rating >= :min_rating) "
+            "AND (:is_watched IS NULL OR is_watched = :is_watched) "
+            f"ORDER BY {sort_by} ASC;"
+        )
+        params = {
+            "pattern": f"%{phrase}%",
+            "min_rating": min_rating,
+            "is_watched": None if is_watched is None else int(is_watched),
+        }
+        rows = self._conn.execute(sql, params).fetchall()
+        return [row_to_media(row) for row in rows]
 
     def first_watchlist_id(self) -> int | None:
         row = self._conn.execute("SELECT watchlist_id FROM watchlists ORDER BY watchlist_id LIMIT 1;").fetchone()
