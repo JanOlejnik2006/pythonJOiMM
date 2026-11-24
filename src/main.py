@@ -133,6 +133,7 @@ def print_menu():
     print("7. Raport platform")
     print("8. Połącz z bazą (online)")
     print("9. Wyjście z programu")
+    print("10.Wyciagniecie filmu z bazy")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -427,6 +428,18 @@ def show_platform_report():
         rating = f"{row['srednia_ocena']:.2f}" if row["srednia_ocena"] is not None else "-"
         print(f"{row['platforma']:<{width}} {row['pozycji']:>7} {rating:>9} {format_runtime(row['laczny_czas_min']):>13}")
     print(f"Razem: {len(catalog)} pozycji, {format_runtime(catalog.total_runtime_minutes())}")
+#jo
+def get_from_db():
+    title = get_non_empty_string("Podaj tytuł filmu: ")
+    catalog = get_catalog()
+    found = False
+    for media in catalog.items:
+        if title.lower() in media.title.lower():
+            print(f"{media.title} | {media.runtime_minutes()} min | {media.genre}")
+            found = True
+    if not found:
+        print("Nie znaleziono filmu o takim tytule.")
+
 
 #mm
 def handle_menu_choice(choice: str) -> bool:
@@ -447,6 +460,8 @@ def handle_menu_choice(choice: str) -> bool:
             show_platform_report()
         case "8":
             reconnect()
+        case "10":
+            get_from_db()
         case "9" | "q" | "exit":
             print("Zamykanie programu. Do widzenia!")
             return False
@@ -484,7 +499,7 @@ def main():
     running = True
     while running:
         print_menu()
-        user_choice = input("Wybierz opcję [1-9]: ")
+        user_choice = input("Wybierz opcję [1-10]: ")
         try:
             running = handle_menu_choice(user_choice)
         except PyMongoError:
