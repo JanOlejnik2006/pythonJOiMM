@@ -1,4 +1,4 @@
-#mm
+#mm (edit:jo)
 import json
 import sqlite3
 import sys
@@ -109,6 +109,40 @@ def test_6_wiezy_check_i_duplikaty():
         pass
     assert repo.count_items(watchlist_id) == 1
 
+#jo
+def test_7_odpornosc_na_sql_injection():
+    repo = make_repo()
+    repo.save_watchlist(make_watchlist())
+    assert len(repo.search_items("Incep")) == 1
+    assert repo.search_items("' OR '1'='1") == []
+    assert repo.search_items("%' OR 1=1 --") == []
+    try:
+        repo.search_items("", sort_by="title; DROP TABLE media_items")
+        assert False, "Kolumna spoza białej listy powinna rzucić ValueError"
+    except ValueError:
+        pass
+    assert len(repo.search_items("")) == 2
+    assert [m.title for m in repo.search_items("", min_rating=9.0)] == ["Incepcja"]
+    assert [m.title for m in repo.search_items("", is_watched=False)] == ["Breaking Bad"]
+
+#jo
+def test_8_rollback_przy_przenoszeniu():
+    repo = make_repo()
+    movie = Movie(1, "Incepcja", "Sci-Fi", "Netflix", 148)
+    first = repo.save_watchlist(Watchlist("Lista A", [movie]))
+    second = repo.save_watchlist(Watchlist("Lista B", [movie]))
+    try:
+        repo.move_item(movie, first, second)
+        assert False, "Ten sam film na liście B powinien rzucić IntegrityError"
+    except sqlite3.IntegrityError:
+        pass
+    assert repo.count_items(first) == 1, "ROLLBACK powinien przywrócić film na liście A"
+    assert repo.count_items(second) == 1
+    third = repo.save_watchlist(Watchlist("Lista C"))
+    repo.move_item(movie, first, third)
+    assert repo.count_items(first) == 0
+    assert repo.count_items(third) == 1
+
 #mm
 TESTS = [
     test_1_schemat_z_kluczem_obcym,
@@ -117,6 +151,8 @@ TESTS = [
     test_4_kaskadowe_usuwanie,
     test_5_migracja_z_json,
     test_6_wiezy_check_i_duplikaty,
+    test_7_odpornosc_na_sql_injection,
+    test_8_rollback_przy_przenoszeniu,
 ]
 
 #mm

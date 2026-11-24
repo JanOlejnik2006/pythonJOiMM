@@ -118,7 +118,7 @@ class WatchlistRepository:
 
     def count_watchlists(self) -> int:
         return self._conn.execute("SELECT COUNT(*) FROM watchlists;").fetchone()[0]
-    
+
     def save_watchlist(self, watchlist: Watchlist) -> int:
         """Transakcja: watchlista i wszystkie jej pozycje zapisują się razem albo wcale."""
         created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -199,6 +199,18 @@ class WatchlistRepository:
         return self._conn.execute(
             "SELECT COUNT(*) FROM media_items WHERE watchlist_id = ?;", (watchlist_id,)
         ).fetchone()[0]
+
+    #jo
+    def move_item(self, media: MediaTitle, from_id: int, to_id: int) -> None:
+        """Transakcja w dwóch krokach: usuń z jednej listy, dodaj do drugiej. Błąd w kroku 2 cofa krok 1 (ROLLBACK)."""
+        with self._conn:
+            cur = self._conn.execute(
+                "DELETE FROM media_items WHERE watchlist_id = ? AND media_id = ?;",
+                (from_id, media.title_id),
+            )
+            if cur.rowcount == 0:
+                raise ValueError(f"Na liście {from_id} nie ma pozycji o ID {media.title_id}.")
+            self._conn.execute(INSERT_ITEM, media_to_row(media, to_id))
 
     #mm
     def watchlist_report(self, min_titles: int = 0) -> list[dict]:
