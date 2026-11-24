@@ -305,7 +305,8 @@ def print_watchlist_menu():
     print("6. Sortuj")
     print("7. Ile dni do końca serialu")
     print("8. Szukaj w bazie (filtr)")
-    print("9. Powrót do menu")
+    print("9. Raport list i platform")
+    print("10. Powrót do menu")
 
 #mm
 def show_watchlist():
@@ -421,7 +422,7 @@ def watchlist_menu():
     running = True
     while running:
         print_watchlist_menu()
-        match input("Wybierz opcję [1-9]: ").strip():
+        match input("Wybierz opcję [1-10]: ").strip():
             case "1":
                 show_watchlist()
             case "2":
@@ -439,13 +440,34 @@ def watchlist_menu():
             case "8":
                 watchlist_search()
             case "9":
+                show_watchlist_report()
+            case "10":
                 running = False
             case _:
-                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 9.")
+                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 10.")
 
 #jo
 def format_runtime(minutes: int) -> str:
     return f"{minutes // 60} h {minutes % 60:02d} min"
+
+#mm
+def show_watchlist_report():
+    print("\n--- RAPORT LIST ---")
+    for row in REPO.watchlist_report():
+        print(
+            f"{row['name']} | tytułów: {row['titles']} | czas: {format_runtime(row['total_min'])} | "
+            f"średnia ocena: {row['avg_rating']:.2f}"
+        )
+    print("\n--- PLATFORMY NA TWOJEJ LIŚCIE ---")
+    rows = REPO.platform_report(WATCHLIST_ID)
+    if not rows:
+        print("Lista jest pusta.")
+        return
+    for row in rows:
+        print(
+            f"{row['platform']} | tytułów: {row['titles']} | obejrzane: {row['watched']} | "
+            f"czas: {format_runtime(row['total_min'])}"
+        )
 
 #mm (edit:jo)
 def show_platform_report():
