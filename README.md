@@ -11,6 +11,13 @@ Testy: `python test_models.py`, `python test_manager.py` i `python test_database
 
 ## Historia wersji
 
+### 4.1.0 (2026-11-24)
+- wyszukiwanie w bazie: fragment tytułu, minimalna ocena, status obejrzenia, sortowanie z białej listy
+- raport list i platform liczony przez bazę (LEFT JOIN, GROUP BY, HAVING, COALESCE)
+- przenoszenie tytułu między listami w jednej transakcji z ROLLBACK
+- autotesty: odporność na SQL injection, ROLLBACK i raporty JOIN
+- w głównym menu opcja 10: wyszukanie filmu w kolekcji po fragmencie tytułu (tytuł, czas, gatunek)
+
 ### 4.0.0 (2026-11-17)
 - watchlista w relacyjnej bazie SQLite (data/cinestream.db) zamiast pliku JSON
 - dwie tabele: watchlists i media_items, klucz obcy z ON DELETE CASCADE i więzy CHECK

@@ -292,7 +292,7 @@ W żadnym teście program się nie wywalił i nie pokazał `Traceback`.
 ## 5. Podział pracy (Zadanie 2)
 * **Mateusz Mazur:** podpięcie watchlisty pod `storage.py` w `main.py` i `services.py`, średnia ocena w watchliście, opcja „0. Anuluj” przy wyborze filmu do dodania lub usunięcia, podpowiedź „Czy chodziło o…?” przy literówce w wyszukiwarce, kopie zapasowe z rotacją, uzupełnianie brakujących pól filmów, komunikat o braku internetu, data premiery filmów, sprawozdanie do Zadania 2, status online/offline w menu, tryb offline (filmy z bazy albo z kopii JSON, blokada dodawania offline), sprawozdanie o trybie offline, ponowne łączenie online w menu, drobne poprawki – 16 commitów.
 * **Jan Olejnik:** moduł `storage.py` (zapis i odczyt CSV, obsługa braku i uszkodzenia pliku), przeniesienie filtra i sortowania do `data.py`, komunikat przy braku połączenia z bazą, źródła w sprawozdaniu, lepsza wyszukiwarka (bez polskich znaków i wielkości liter, kilka słów w dowolnej kolejności, szukanie też po gatunku i platformie), zapis atomowy watchlisty, kwarantanna uszkodzonego pliku i odtwarzanie z kopii, czas w pliku watchlisty w formacie godzina:minuta, poprawka komunikatu przy braku internetu, sprawdzanie internetu pingiem, zapis atomowy kopii filmów do JSON z kopiami zapasowymi, odczyt kopii JSON z kwarantanną i odtworzeniem z .bak, priorytet wyników zaczynających się od szukanej frazy, data aktualizacji lokalnego zapisu w menu, usunięcie zbędnych źródeł, kolejkowanie dodawania filmów offline, poprawka zajętych ID przy wysyłaniu kolejki – 17 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 56 commitów, Mateusz Mazur 53 commity (razem z Zadaniem 3 i 4).
+* **Łącznie w repozytorium:** Jan Olejnik 61 commitów, Mateusz Mazur 58 commitów (razem z Zadaniem 3 i 4).
 
 ---
 ---
@@ -524,6 +524,50 @@ Wynik: 6/6 testów zaliczonych.
 Stare testy dalej przechodzą: `test_models.py` 7/7, `test_manager.py` 7/7.
 
 ## 6. Podział pracy (Zadanie 4)
-* **Mateusz Mazur:** repozytorium watchlisty z transakcyjnym zapisem i odczytem, dodawanie, usuwanie i ocena pozycji w repozytorium, autotesty `test_database.py`, test więzów `CHECK` i duplikatów, usunięcie starego zapisu watchlisty do JSON, sprawozdanie do Zadania 4 – 6 commitów.
-* **Jan Olejnik:** połączenie z SQLite i schemat tabel `watchlists` oraz `media_items`, zamiana obiektu na wiersz tabeli i z powrotem (czas filmu większy od zera), migracja watchlisty z JSON do SQLite, watchlista w menu zapisywana w bazie przez repozytorium, historia wersji 4.0.0 w README – 5 commitów.
-* **Łącznie w repozytorium:** Jan Olejnik 56 commitów, Mateusz Mazur 53 commity.
+* **Mateusz Mazur:** repozytorium watchlisty z transakcyjnym zapisem i odczytem, dodawanie, usuwanie i ocena pozycji w repozytorium, autotesty `test_database.py`, test więzów `CHECK` i duplikatów, usunięcie starego zapisu watchlisty do JSON, sprawozdanie do Zadania 4, raporty list i platform (`LEFT JOIN`, `GROUP BY`, `HAVING`, `COALESCE`), opcja „Raport list i platform” w watchliście, autotesty raportów, sprawozdanie i README do części 2, drobne poprawki formatowania – 11 commitów.
+* **Jan Olejnik:** połączenie z SQLite i schemat tabel `watchlists` oraz `media_items`, zamiana obiektu na wiersz tabeli i z powrotem (czas filmu większy od zera), migracja watchlisty z JSON do SQLite, watchlista w menu zapisywana w bazie przez repozytorium, historia wersji 4.0.0 w README, druga wyszukiwarka w głównym menu („10. Wyciągnięcie filmu z bazy”: tytuł, czas i gatunek), wyszukiwanie w bazie z białą listą sortowania, opcja „Szukaj w bazie” w watchliście, transakcja przenoszenia tytułu między listami z `ROLLBACK`, autotesty SQL injection i `ROLLBACK` – 10 commitów.
+* **Łącznie w repozytorium:** Jan Olejnik 61 commitów, Mateusz Mazur 58 commitów.
+
+## 7. Bezpieczny SQL, JOIN i transakcje (Laboratorium 4.2)
+
+**Audyt bezpieczeństwa.** Wszystkie zapytania w `database.py` przekazują wartości przez parametry (`?` albo `:nazwa`), a nie przez f-stringi. Jedyne miejsce, gdzie do SQL trafia tekst z f-stringa, to nazwa kolumny w `ORDER BY` – tej nie da się podać przez `?`, więc sprawdzamy ją białą listą `ALLOWED_SORT_COLUMNS`. Wszystko spoza listy daje `ValueError`.
+
+**Filtrowanie (`search_items`).** Szuka po fragmencie tytułu (`LIKE`), minimalnej ocenie i statusie „obejrzany”, sortuje po kolumnie z białej listy. W programie: watchlista → „8. Szukaj w bazie (filtr)”.
+
+**Analityka (`watchlist_report`, `platform_report`).** Kluczowe zapytanie – raport list:
+```sql
+SELECT
+    w.watchlist_id,
+    w.name,
+    COUNT(m.item_id) AS titles,
+    COALESCE(SUM(m.duration_min), 0) AS total_min,
+    COALESCE(ROUND(AVG(m.rating), 2), 0.0) AS avg_rating
+FROM watchlists AS w
+LEFT JOIN media_items AS m ON w.watchlist_id = m.watchlist_id
+GROUP BY w.watchlist_id, w.name
+HAVING COUNT(m.item_id) >= ?
+ORDER BY total_min DESC;
+```
+`LEFT JOIN` zostawia też puste listy, `COUNT(m.item_id)` liczy tylko prawdziwe pozycje (a nie wiersz z NULL), `COALESCE` zamienia brak danych na 0, a `HAVING` odrzuca listy z za małą liczbą tytułów. Drugi raport (`platform_report`) używa `JOIN` i `GROUP BY m.platform`. Całe liczenie robi baza, bez pętli w Pythonie. W programie: watchlista → „9. Raport list i platform”:
+```text
+--- RAPORT LIST ---
+Do obejrzenia | tytułów: 7 | czas: 33 h 53 min | średnia ocena: 8.50
+
+--- PLATFORMY NA TWOJEJ LIŚCIE ---
+CDA | tytułów: 1 | obejrzane: 1 | czas: 3 h 44 min
+Netflix | tytułów: 1 | obejrzane: 0 | czas: 2 h 28 min
+```
+
+**Transakcja z wycofaniem (`move_item`).** Przeniesienie tytułu między listami to dwa kroki w jednym `with conn:` – usunięcie z listy A i dodanie do listy B. Jeśli na liście B ten film już jest, `UNIQUE` rzuca `IntegrityError` i baza robi `ROLLBACK`: usunięcie z listy A też zostaje cofnięte, więc film nie znika.
+
+**Scenariusz testu bezpieczeństwa.** Wpisujemy jako szukany tytuł `' OR '1'='1`. Przy f-stringu zapytanie zamieniłoby się w warunek zawsze prawdziwy i zwróciło całą tabelę. U nas to zwykły tekst w parametrze, więc wynik jest pusty. Próba sortowania po `title; DROP TABLE media_items` kończy się `ValueError`, a tabela zostaje.
+
+**Testy po rozszerzeniu:**
+```text
+[OK]   test_7_odpornosc_na_sql_injection
+[OK]   test_8_rollback_przy_przenoszeniu
+[OK]   test_9_raport_list_left_join
+[OK]   test_10_raport_platform
+
+Wynik: 10/10 testów zaliczonych.
+```
