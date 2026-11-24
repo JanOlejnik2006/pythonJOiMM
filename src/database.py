@@ -115,7 +115,7 @@ class WatchlistRepository:
 
     def count_watchlists(self) -> int:
         return self._conn.execute("SELECT COUNT(*) FROM watchlists;").fetchone()[0]
-
+    
     def save_watchlist(self, watchlist: Watchlist) -> int:
         """Transakcja: watchlista i wszystkie jej pozycje zapisują się razem albo wcale."""
         created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
