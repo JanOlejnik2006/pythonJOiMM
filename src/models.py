@@ -406,7 +406,8 @@ class Watchlist:
         ratings = [movie.rating for movie in self._items if movie.rating is not None]
         if not ratings:
             return 0.0
-        return round(sum(ratings) / len(ratings), 1) 
+        return round(sum(ratings) / len(ratings), 1)
+
     def __len__(self) -> int:
         return len(self._items)
 
