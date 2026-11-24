@@ -200,6 +200,44 @@ class WatchlistRepository:
             "SELECT COUNT(*) FROM media_items WHERE watchlist_id = ?;", (watchlist_id,)
         ).fetchone()[0]
 
+    #mm
+    def watchlist_report(self, min_titles: int = 0) -> list[dict]:
+        """Raport list: LEFT JOIN pokazuje też puste listy, COALESCE zamienia NULL na 0, HAVING to próg."""
+        sql = """
+        SELECT
+            w.watchlist_id,
+            w.name,
+            COUNT(m.item_id) AS titles,
+            COALESCE(SUM(m.duration_min), 0) AS total_min,
+            COALESCE(ROUND(AVG(m.rating), 2), 0.0) AS avg_rating
+        FROM watchlists AS w
+        LEFT JOIN media_items AS m ON w.watchlist_id = m.watchlist_id
+        GROUP BY w.watchlist_id, w.name
+        HAVING COUNT(m.item_id) >= ?
+        ORDER BY total_min DESC;
+        """
+        rows = self._conn.execute(sql, (min_titles,)).fetchall()
+        return [dict(row) for row in rows]
+
+    #mm
+    def platform_report(self, watchlist_id: int, min_titles: int = 1) -> list[dict]:
+        """Raport platform jednej listy: JOIN + GROUP BY po platformie, HAVING odrzuca małe grupy."""
+        sql = """
+        SELECT
+            m.platform,
+            COUNT(m.item_id) AS titles,
+            COALESCE(SUM(m.duration_min), 0) AS total_min,
+            COALESCE(SUM(m.is_watched), 0) AS watched
+        FROM watchlists AS w
+        JOIN media_items AS m ON w.watchlist_id = m.watchlist_id
+        WHERE w.watchlist_id = ?
+        GROUP BY m.platform
+        HAVING COUNT(m.item_id) >= ?
+        ORDER BY titles DESC, m.platform ASC;
+        """
+        rows = self._conn.execute(sql, (watchlist_id, min_titles)).fetchall()
+        return [dict(row) for row in rows]
+
 #jo
 def migrate_json_watchlist(repo: WatchlistRepository, json_path: Path = WATCHLIST_FILE) -> int:
     """Jednorazowa migracja: tylko gdy baza jest pusta. Plik JSON zmienia nazwę na .json.bak."""
