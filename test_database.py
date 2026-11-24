@@ -144,6 +144,33 @@ def test_8_rollback_przy_przenoszeniu():
     assert repo.count_items(third) == 1
 
 #mm
+def test_9_raport_list_left_join():
+    repo = make_repo()
+    full = repo.save_watchlist(make_watchlist())
+    empty = repo.save_watchlist(Watchlist("Pusta lista"))
+    report = {row["watchlist_id"]: row for row in repo.watchlist_report()}
+    assert report[full]["titles"] == 2
+    assert report[full]["total_min"] == 148 + 2820
+    assert report[full]["avg_rating"] == 9.0
+    assert report[empty]["titles"] == 0
+    assert report[empty]["total_min"] == 0
+    assert report[empty]["avg_rating"] == 0.0
+    assert [row["name"] for row in repo.watchlist_report(min_titles=1)] == ["Do obejrzenia"]
+
+#mm
+def test_10_raport_platform():
+    repo = make_repo()
+    watchlist = make_watchlist()
+    watchlist.add(Movie(3, "Gladiator", "Historyczny", "Max", 155))
+    watchlist_id = repo.save_watchlist(watchlist)
+    report = repo.platform_report(watchlist_id)
+    assert [row["platform"] for row in report] == ["Netflix", "Max"]
+    assert report[0]["titles"] == 2
+    assert report[0]["watched"] == 1
+    assert report[0]["total_min"] == 148 + 2820
+    assert [row["platform"] for row in repo.platform_report(watchlist_id, min_titles=2)] == ["Netflix"]
+
+#mm
 TESTS = [
     test_1_schemat_z_kluczem_obcym,
     test_2_klucz_obcy_blokuje_sierote,
@@ -153,6 +180,8 @@ TESTS = [
     test_6_wiezy_check_i_duplikaty,
     test_7_odpornosc_na_sql_injection,
     test_8_rollback_przy_przenoszeniu,
+    test_9_raport_list_left_join,
+    test_10_raport_platform,
 ]
 
 #mm
