@@ -133,7 +133,7 @@ def print_menu():
     print("7. Raport platform")
     print("8. Połącz z bazą (online)")
     print("9. Wyjście z programu")
-    print("10.Wyciagniecie filmu z bazy")
+    print("10. Wyciągnięcie filmu z bazy")
     print("-" * 40)
 
 #mm (edit:jo)
@@ -304,7 +304,8 @@ def print_watchlist_menu():
     print("5. Filtruj")
     print("6. Sortuj")
     print("7. Ile dni do końca serialu")
-    print("8. Powrót do menu")
+    print("8. Szukaj w bazie (filtr)")
+    print("9. Powrót do menu")
 
 #mm
 def show_watchlist():
@@ -384,12 +385,43 @@ def watchlist_days():
     days = Series.from_dict(series).days_to_finish(minutes_per_day)
     print(f"Serial {series['title']}: {days} dni przy {minutes_per_day} min dziennie (zaokrąglone w górę).")
 
+#jo
+SEARCH_SORT = {
+    1: ("title", "tytuł"),
+    2: ("rating", "ocena"),
+    3: ("duration_min", "czas trwania"),
+    4: ("year", "rok premiery"),
+}
+
+#jo
+def watchlist_search():
+    phrase = input("Fragment tytułu (Enter = wszystkie): ").strip()
+    min_rating = None
+    if get_yes_no("Tylko z oceną od jakiegoś progu? [t/n]: "):
+        min_rating = get_float_input("Minimalna ocena [1-10]: ", 1, 10)
+    is_watched = None
+    match input("Status: 1 = obejrzane, 2 = nieobejrzane, Enter = wszystkie: ").strip():
+        case "1":
+            is_watched = True
+        case "2":
+            is_watched = False
+    for number, (_, label) in SEARCH_SORT.items():
+        print(f"{number}. {label}")
+    choice = get_int_input(f"Sortuj po [1-{len(SEARCH_SORT)}]: ", 1, len(SEARCH_SORT))
+    results = REPO.search_items(phrase, min_rating, is_watched, SEARCH_SORT[choice][0])
+    if not results:
+        print("Brak wyników.")
+        return
+    print(f"Znaleziono: {len(results)}")
+    for media in results:
+        print(media)
+
 #mm (edit:jo)
 def watchlist_menu():
     running = True
     while running:
         print_watchlist_menu()
-        match input("Wybierz opcję [1-8]: ").strip():
+        match input("Wybierz opcję [1-9]: ").strip():
             case "1":
                 show_watchlist()
             case "2":
@@ -405,9 +437,11 @@ def watchlist_menu():
             case "7":
                 watchlist_days()
             case "8":
+                watchlist_search()
+            case "9":
                 running = False
             case _:
-                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 8.")
+                print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 9.")
 
 #jo
 def format_runtime(minutes: int) -> str:
@@ -428,6 +462,7 @@ def show_platform_report():
         rating = f"{row['srednia_ocena']:.2f}" if row["srednia_ocena"] is not None else "-"
         print(f"{row['platforma']:<{width}} {row['pozycji']:>7} {rating:>9} {format_runtime(row['laczny_czas_min']):>13}")
     print(f"Razem: {len(catalog)} pozycji, {format_runtime(catalog.total_runtime_minutes())}")
+
 #jo
 def get_from_db():
     title = get_non_empty_string("Podaj tytuł filmu: ")
@@ -439,7 +474,6 @@ def get_from_db():
             found = True
     if not found:
         print("Nie znaleziono filmu o takim tytule.")
-
 
 #mm
 def handle_menu_choice(choice: str) -> bool:
@@ -466,7 +500,7 @@ def handle_menu_choice(choice: str) -> bool:
             print("Zamykanie programu. Do widzenia!")
             return False
         case _:
-            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 9.")
+            print("Błąd: Nieznana opcja. Wybierz wartość od 1 do 10.")
     return True
 
 #mm (edit:jo)
